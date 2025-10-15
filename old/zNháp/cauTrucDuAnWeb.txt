@@ -1,0 +1,36 @@
+robot_pet_homeguard_web/
+│
+├── README.md                     # Giới thiệu dự án web, cách chạy
+├── package.json                  # Node.js dependencies (express, socket.io, cors,…)
+├── server.js                     # Entry point server Node.js + WebSocket
+├── .env                          # Config biến môi trường (DB, port,…)
+│
+├── database/                     # SQL scripts
+│   └── schema.sql
+│
+├── src/
+│   ├── controllers/              # Xử lý logic, nhận request, xử lý WebSocket
+│   │   ├── esp32Controller.js    # Nhận dữ liệu từ ESP32
+│   │   ├── aiController.js       # Nhận dữ liệu từ laptop AI
+│   │   └── webController.js      # Xử lý request từ frontend
+│   │
+│   ├── services/                 # Xử lý backend logic, database, websocket
+│   │   ├── dbService.js          # Kết nối & truy vấn database
+│   │   ├── websocketService.js   # Broadcast dữ liệu realtime
+│   │   └── aiService.js          # Logic xử lý dữ liệu từ laptop AI
+│   │
+│   ├── routes/                   # API routes (RESTful nếu cần)
+│   │   └── apiRoutes.js
+│   │
+│   ├── models/                   # Mô hình dữ liệu / ORM
+│   │   └── sensorData.js
+│   │
+│   └── utils/
+│       └── logger.js             # Ghi log realtime
+│
+├── public/                       # Frontend tĩnh (HTML/CSS/JS)
+│   ├── index.html
+│   ├── app.js                     # Frontend JS, socket.io client
+│   └── styles.css
+│
+└── node_modules/                 # Node.js dependencies

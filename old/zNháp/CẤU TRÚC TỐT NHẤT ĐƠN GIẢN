@@ -1,0 +1,166 @@
+# AI-Engine Project Structure (Updated)
+
+```
+Ai-Engine/
+│
+├── README.md
+├── pyproject.toml              # Poetry dependency management (modern Python)
+├── poetry.lock
+├── requirements.txt            # Fallback cho pip
+├── .env.example
+├── .gitignore
+├── .dockerignore
+├── pytest.ini                  # Test configuration
+├── mypy.ini                    # Type checking
+│
+├── main.py                     # Application entry point
+├── config/
+│   ├── __init__.py
+│   ├── settings.py             # Pydantic Settings (type-safe config)
+│   ├── logging.yaml            # Structured logging config
+│   └── models.yaml             # AI model configurations
+│
+├── src/
+│   ├── __init__.py
+│   │
+│   ├── core/                   # 🧠 Core AI Engines (Business Logic)
+│   │   ├── __init__.py
+│   │   │
+│   │   ├── vision/             # Computer Vision Module
+│   │   │   ├── __init__.py
+│   │   │   ├── camera_manager.py       # Camera lifecycle & streaming
+│   │   │   ├── face_detector.py        # Face detection (YOLO/MTCNN)
+│   │   │   ├── face_recognizer.py      # Face recognition (FaceNet)
+│   │   │   ├── motion_detector.py      # Motion detection (OpenCV)
+│   │   │   ├── object_detector.py      # Object detection (YOLO)
+│   │   │   └── pose_estimator.py       # Pose estimation (MediaPipe)
+│   │   │
+│   │   ├── audio/              # Audio Processing Module
+│   │   │   ├── __init__.py
+│   │   │   ├── audio_capture.py        # Microphone input handler
+│   │   │   ├── speech_to_text.py       # STT (Whisper/Vosk)
+│   │   │   ├── text_to_speech.py       # TTS (Coqui/gTTS)
+│   │   │   ├── voice_recognition.py    # Speaker identification
+│   │   │   ├── sound_classifier.py     # Sound event detection
+│   │   │   └── noise_reducer.py        # Audio preprocessing
+│   │   │
+│   │   ├── nlp/                # Natural Language Processing
+│   │   │   ├── __init__.py
+│   │   │   ├── llm_manager.py          # LLM interface (Ollama/OpenAI)
+│   │   │   ├── conversation_engine.py  # Dialog management
+│   │   │   ├── intent_classifier.py    # Intent recognition
+│   │   │   ├── entity_extractor.py     # NER (Named Entity Recognition)
+│   │   │   └── sentiment_analyzer.py   # Emotion detection
+│   │   │
+│   │   ├── behavior/           # Robot Behavior Intelligence
+│   │   │   ├── __init__.py
+│   │   │   ├── behavior_engine.py      # Behavior state machine
+│   │   │   ├── emotion_model.py        # Emotion simulation
+│   │   │   ├── decision_maker.py       # Action decision logic
+│   │   │   └── personality.py          # Robot personality traits
+│   │   │
+│   │   └── analytics/          # Data Analysis & ML
+│   │       ├── __init__.py
+│   │       ├── sensor_analyzer.py      # Sensor data analysis
+│   │       ├── anomaly_detector.py     # Anomaly detection (ML)
+│   │       ├── pattern_recognizer.py   # Pattern recognition
+│   │       └── predictor.py            # Predictive analytics
+│   │
+│   ├── services/               # 🔌 Application Services (Infrastructure)
+│   │   ├── __init__.py
+│   │   ├── websocket/
+│   │   │   ├── __init__.py
+│   │   │   ├── client.py               # WebSocket client manager
+│   │   │   ├── message_handler.py      # Message routing & parsing
+│   │   │   ├── reconnect_manager.py    # Auto-reconnection logic
+│   │   │   └── protocols.py            # Message protocols & schemas
+│   │   │
+│   │   ├── camera_service.py           # Camera processing orchestrator
+│   │   ├── voice_service.py            # Voice processing orchestrator
+│   │   ├── llm_service.py              # LLM processing orchestrator
+│   │   ├── notification_service.py     # Alert & notification handler
+│   │   └── health_monitor.py           # System health monitoring
+│   │
+│   ├── models/                 # 🤖 ML Models & Data
+│   │   ├── __init__.py
+│   │   ├── base.py                     # Base model interface
+│   │   ├── face_recognition/
+│   │   │   ├── embeddings.pkl          # Face embeddings database
+│   │   │   └── metadata.json
+│   │   ├── voice/
+│   │   │   ├── speaker_models.pkl
+│   │   │   └── voiceprints.json
+│   │   └── behavior/
+│   │       └── state_models.pkl
+│   │
+│   ├── data/                   # 📊 Data Pipelines
+│   │   ├── __init__.py
+│   │   ├── buffers/
+│   │   │   ├── video_buffer.py         # Ring buffer for video frames
+│   │   │   ├── audio_buffer.py         # Ring buffer for audio
+│   │   │   └── sensor_buffer.py        # Time-series buffer
+│   │   ├── processors/
+│   │   │   ├── video_processor.py      # Video frame processing
+│   │   │   ├── audio_processor.py      # Audio chunk processing
+│   │   │   └── batch_processor.py      # Batch processing utilities
+│   │   └── storage/
+│   │       ├── cache_manager.py        # Redis/in-memory cache
+│   │       └── database.py             # Database interface (optional)
+│   │
+│   ├── api/                    # 🌐 Internal API (if needed)
+│   │   ├── __init__.py
+│   │   ├── routes.py                   # FastAPI routes (for debugging)
+│   │   └── schemas.py                  # Pydantic models for API
+│   │
+│   └── utils/                  # 🛠️ Utilities & Helpers
+│       ├── __init__.py
+│       ├── logger.py                   # Structured logging setup
+│       ├── decorators.py               # Performance decorators
+│       ├── validators.py               # Input validation
+│       ├── converters.py               # Data format converters
+│       ├── metrics.py                  # Performance metrics
+│       └── constants.py                # Global constants
+│
+├── tests/                      # 🧪 Testing Suite
+│   ├── __init__.py
+│   ├── conftest.py                     # Pytest fixtures
+│   ├── unit/
+│   │   ├── test_vision.py
+│   │   ├── test_audio.py
+│   │   ├── test_nlp.py
+│   │   └── test_behavior.py
+│   ├── integration/
+│   │   ├── test_websocket.py
+│   │   ├── test_services.py
+│   │   └── test_e2e.py
+│   └── fixtures/
+│       ├── sample_video.mp4
+│       ├── sample_audio.wav
+│       └── test_config.yaml
+│
+├── scripts/                    # 🚀 Automation Scripts
+│   ├── setup.sh                        # Environment setup
+│   ├── train_model.py                  # Model training script
+│   ├── benchmark.py                    # Performance benchmarking
+│   └── collect_faces.py                # Face data collection tool
+│
+├── docker/                     # 🐳 Docker Configuration
+│   ├── Dockerfile
+│   ├── Dockerfile.gpu                  # GPU-enabled version
+│   ├── docker-compose.yml
+│   └── .dockerignore
+│
+├── docs/                       # 📚 Documentation
+│   ├── API.md
+│   ├── ARCHITECTURE.md
+│   ├── MODELS.md                       # Model documentation
+│   ├── DEPLOYMENT.md
+│   └── CONTRIBUTING.md
+│
+└── notebooks/                  # 📓 Jupyter Notebooks (R&D)
+    ├── face_recognition_experiments.ipynb
+    ├── voice_training.ipynb
+    └── behavior_analysis.ipynb
+```
+
+---

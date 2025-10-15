@@ -1,0 +1,23 @@
+torch --index-url https://download.pytorch.org/whl/cu126         # PyTorch – thư viện học sâu, hỗ trợ GPU CUDA 12.6 để huấn luyện và chạy mô hình AI nhanh hơn
+
+torchvision --index-url https://download.pytorch.org/whl/cu126   # Bộ công cụ xử lý ảnh cho PyTorch: datasets, transforms, pretrained models như ResNet, MobileNet...
+
+sounddevice                                                      # Ghi âm và phát âm thanh từ micro/loa, trả về dữ liệu dưới dạng NumPy array
+
+scipy                                                            # Thư viện toán học và xử lý tín hiệu: Fourier, tối ưu hóa, thống kê, đại số tuyến tính...
+
+transformers                                                     # Thư viện của Hugging Face để dùng các mô hình ngôn ngữ lớn như BERT, GPT, Whisper...
+
+ollama                                                           # Giao tiếp với mô hình LLM chạy cục bộ như LLaMA2, Mistral qua API – không cần internet
+
+pyttsx3                                                          # Chuyển văn bản thành giọng nói (Text-to-Speech) offline, hỗ trợ nhiều giọng hệ thống
+
+soundfile                                                        # Đọc và ghi file âm thanh (.wav, .flac...) dưới dạng NumPy array, dùng chung với sounddevice
+
+opencv-python                                                    # Thư viện xử lý ảnh/video, nhận diện khuôn mặt, vật thể, truy cập webcam, vẽ khung...
+
+deepface                                                        # Nhận diện khuôn mặt, phân tích cảm xúc, tuổi, giới tính từ ảnh hoặc video     
+
+tf-keras                                                        # Thư viện học sâu cao cấp, dễ dùng, xây dựng trên TensorFlow để tạo và huấn luyện mô hình AI
+
+mediapipe                                                       #model nhận diện cử chỉ tay, khuôn mặt, tư thế cơ thể thời gian thực từ ảnh/video

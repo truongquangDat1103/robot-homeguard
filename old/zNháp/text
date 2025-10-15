@@ -1,0 +1,483 @@
+// ============================================
+// ESP32 WebSocket Client for Robot Pet
+// File: esp32_websocket_client.cpp
+// ============================================
+
+#include <WiFi.h>
+#include <WebSocketsClient.h>
+#include <ArduinoJson.h>
+#include <SPIFFS.h>
+#include <time.h>
+
+// WiFi credentials
+#define WIFI_SSID "your_ssid"
+#define WIFI_PASSWORD "your_password"
+
+// WebSocket server
+#define WS_SERVER "ws://your-server.com"
+#define WS_PORT 8080
+#define WS_PATH "/"
+
+// Robot configuration
+#define ROBOT_ID "robot_001"
+#define CONNECTION_TYPE "esp32"
+
+// Timing constants
+#define HEARTBEAT_INTERVAL 30000      // 30 seconds
+#define RECONNECT_INTERVAL 5000       // 5 seconds
+#define CONNECTION_TIMEOUT 15000      // 15 seconds
+
+// Sensor pins
+#define TEMP_SENSOR_PIN 34
+#define HUMIDITY_SENSOR_PIN 35
+#define FLAME_SENSOR_PIN 32
+#define GAS_SENSOR_PIN 33
+#define MOTION_SENSOR_PIN 27
+#define ULTRASONIC_TRIG_PIN 25
+#define ULTRASONIC_ECHO_PIN 26
+
+// ============================================
+// GLOBAL VARIABLES
+// ============================================
+
+WebSocketsClient webSocket;
+unsigned long lastHeartbeat = 0;
+unsigned long lastReconnectAttempt = 0;
+bool isConnected = false;
+String connectionId = "";
+String messageId = "";
+int messageCounter = 0;
+
+// Sensor data structures
+struct SensorData {
+  float temperature;
+  float humidity;
+  bool flameDetected;
+  int gasLevel;
+  bool motionDetected;
+  float distance;
+  unsigned long timestamp;
+};
+
+SensorData sensorData = {0, 0, false, 0, false, 0, 0};
+
+// ============================================
+// UTILITY FUNCTIONS
+// ============================================
+
+// Generate UUID v4
+String generateUUID() {
+  char uuid[37];
+  sprintf(uuid, "%08x-%04x-%04x-%04x-%012x",
+    random(0xFFFFFFFF),
+    random(0xFFFF),
+    (random(0xFFFF) & 0x0FFF) | 0x4000,
+    (random(0xFFFF) & 0x3FFF) | 0x8000,
+    random(0xFFFFFFFF));
+  return String(uuid);
+}
+
+// Get current timestamp in milliseconds
+unsigned long getCurrentTimestamp() {
+  return millis();
+}
+
+// Create WebSocket message structure
+String createMessage(const char* messageType, const char* target = nullptr) {
+  StaticJsonDocument<512> doc;
+  
+  doc["id"] = generateUUID();
+  doc["type"] = messageType;
+  doc["source"] = CONNECTION_TYPE;
+  doc["robotId"] = ROBOT_ID;
+  doc["timestamp"] = getCurrentTimestamp();
+  
+  if (target != nullptr) {
+    doc["target"] = target;
+  }
+  
+  String output;
+  serializeJson(doc, output);
+  return output;
+}
+
+// Create sensor data message
+String createSensorMessage(const char* sensorType, float value, 
+                          const char* unit, const char* alertLevel) {
+  StaticJsonDocument<512> doc;
+  
+  doc["id"] = generateUUID();
+  doc["type"] = "sensor_data";
+  doc["source"] = CONNECTION_TYPE;
+  doc["robotId"] = ROBOT_ID;
+  doc["timestamp"] = getCurrentTimestamp();
+  doc["requiresAck"] = true;
+  
+  JsonObject payload = doc.createNestedObject("payload");
+  payload["sensorType"] = sensorType;
+  payload["sensorName"] = sensorType;
+  payload["value"] = value;
+  payload["unit"] = unit;
+  payload["alertLevel"] = alertLevel;
+  payload["location"] = "robot_main";
+  
+  String output;
+  serializeJson(doc, output);
+  return output;
+}
+
+// Log message to Serial
+void logMessage(const char* prefix, const char* message) {
+  Serial.print("[");
+  Serial.print(prefix);
+  Serial.print("] ");
+  Serial.println(message);
+}
+
+// ============================================
+// SENSOR READING FUNCTIONS
+// ============================================
+
+float readTemperature() {
+  int raw = analogRead(TEMP_SENSOR_PIN);
+  // DHT11/DHT22 simulation - adjust based on actual sensor
+  float voltage = raw * 3.3 / 4095.0;
+  float temperature = (voltage - 0.5) * 100.0;
+  return constrain(temperature, -40, 80);
+}
+
+float readHumidity() {
+  int raw = analogRead(HUMIDITY_SENSOR_PIN);
+  float humidity = (raw / 4095.0) * 100.0;
+  return constrain(humidity, 0, 100);
+}
+
+bool readFlame() {
+  // Digital sensor - LOW means flame detected
+  return digitalRead(FLAME_SENSOR_PIN) == LOW;
+}
+
+int readGasLevel() {
+  int raw = analogRead(GAS_SENSOR_PIN);
+  // Assuming 0-4095 maps to 0-1000 ppm
+  return map(raw, 0, 4095, 0, 1000);
+}
+
+bool readMotion() {
+  return digitalRead(MOTION_SENSOR_PIN) == HIGH;
+}
+
+float readDistance() {
+  // Ultrasonic sensor distance reading
+  digitalWrite(ULTRASONIC_TRIG_PIN, LOW);
+  delayMicroseconds(2);
+  digitalWrite(ULTRASONIC_TRIG_PIN, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(ULTRASONIC_TRIG_PIN, LOW);
+  
+  long duration = pulseIn(ULTRASONIC_ECHO_PIN, HIGH, 30000);
+  float distance = (duration * 0.034) / 2;
+  return distance;
+}
+
+// Determine alert level based on sensor value
+const char* getAlertLevel(const char* sensorType, float value) {
+  if (strcmp(sensorType, "temperature") == 0) {
+    if (value > 40) return "critical";
+    if (value > 35) return "danger";
+    if (value < 15) return "warning";
+  } else if (strcmp(sensorType, "humidity") == 0) {
+    if (value > 85) return "warning";
+    if (value < 20) return "warning";
+  } else if (strcmp(sensorType, "gas") == 0) {
+    if (value > 300) return "critical";
+    if (value > 200) return "danger";
+    if (value > 100) return "warning";
+  }
+  return "normal";
+}
+
+// ============================================
+// WEBSOCKET EVENT HANDLERS
+// ============================================
+
+void webSocketEvent(WStype_t type, uint8_t* payload, size_t length) {
+  switch (type) {
+    case WStype_DISCONNECTED:
+      logMessage("WS", "Disconnected");
+      isConnected = false;
+      connectionId = "";
+      break;
+      
+    case WStype_CONNECTED: {
+      logMessage("WS", "Connected to server");
+      
+      // Send connection initialization message
+      StaticJsonDocument<512> doc;
+      doc["id"] = generateUUID();
+      doc["type"] = "connection_init";
+      doc["source"] = CONNECTION_TYPE;
+      doc["robotId"] = ROBOT_ID;
+      doc["timestamp"] = getCurrentTimestamp();
+      
+      JsonObject payload = doc.createNestedObject("payload");
+      payload["userId"] = nullptr;
+      payload["ipAddress"] = WiFi.localIP().toString();
+      
+      String output;
+      serializeJson(doc, output);
+      webSocket.sendTXT(output);
+      
+      lastHeartbeat = millis();
+      break;
+    }
+    
+    case WStype_TEXT: {
+      String message = String((char*)payload).substring(0, length);
+      logMessage("RX", message.c_str());
+      
+      StaticJsonDocument<1024> doc;
+      DeserializationError error = deserializeJson(doc, message);
+      
+      if (error) {
+        logMessage("ERROR", "JSON parse failed");
+        break;
+      }
+      
+      // Handle ACK
+      if (strcmp(doc["type"], "ack") == 0) {
+        logMessage("WS", "ACK received");
+      }
+      
+      // Handle connection ACK
+      if (strcmp(doc["type"], "ack") == 0 && doc["payload"]["connectionId"]) {
+        connectionId = doc["payload"]["connectionId"].as<String>();
+        isConnected = true;
+        logMessage("WS", "Connection established");
+      }
+      
+      // Handle actuator commands
+      if (strcmp(doc["type"], "actuator_command") == 0) {
+        handleActuatorCommand(doc);
+      }
+      
+      break;
+    }
+    
+    case WStype_BIN:
+      logMessage("WS", "Binary message received (not supported)");
+      break;
+      
+    case WStype_ERROR:
+      logMessage("ERROR", "WebSocket error");
+      break;
+      
+    case WStype_FRAGMENT:
+      logMessage("WS", "Fragment message");
+      break;
+  }
+}
+
+void handleActuatorCommand(JsonDocument& doc) {
+  const char* commandType = doc["payload"]["commandType"];
+  const char* command = doc["payload"]["command"];
+  
+  logMessage("CMD", command);
+  
+  // Handle different command types
+  if (strcmp(commandType, "move") == 0) {
+    handleMoveCommand(doc["payload"]);
+  } else if (strcmp(commandType, "sound") == 0) {
+    handleSoundCommand(doc["payload"]);
+  } else if (strcmp(commandType, "display") == 0) {
+    handleDisplayCommand(doc["payload"]);
+  }
+  
+  // Send acknowledgment
+  StaticJsonDocument<256> ackDoc;
+  ackDoc["id"] = generateUUID();
+  ackDoc["type"] = "ack";
+  ackDoc["source"] = CONNECTION_TYPE;
+  ackDoc["robotId"] = ROBOT_ID;
+  ackDoc["timestamp"] = getCurrentTimestamp();
+  ackDoc["payload"]["commandId"] = doc["payload"]["commandId"];
+  
+  String output;
+  serializeJson(ackDoc, output);
+  webSocket.sendTXT(output);
+}
+
+void handleMoveCommand(JsonObject& payload) {
+  // Implement motor control
+  const char* direction = payload["parameters"]["direction"];
+  int speed = payload["parameters"]["speed"] | 100;
+  
+  // TODO: Control motors based on direction and speed
+  Serial.printf("Moving %s at speed %d\n", direction, speed);
+}
+
+void handleSoundCommand(JsonObject& payload) {
+  // Implement sound/speaker control
+  const char* soundType = payload["parameters"]["type"];
+  
+  // TODO: Play sound based on type
+  Serial.printf("Playing sound: %s\n", soundType);
+}
+
+void handleDisplayCommand(JsonObject& payload) {
+  // Implement display/LED control
+  const char* displayType = payload["parameters"]["type"];
+  const char* content = payload["parameters"]["content"];
+  
+  // TODO: Update display/LEDs
+  Serial.printf("Display: %s - %s\n", displayType, content);
+}
+
+// ============================================
+// SETUP FUNCTION
+// ============================================
+
+void setup() {
+  Serial.begin(115200);
+  delay(1000);
+  
+  logMessage("SETUP", "Initializing ESP32 WebSocket Client");
+  
+  // Initialize SPIFFS
+  if (!SPIFFS.begin(true)) {
+    logMessage("ERROR", "SPIFFS mount failed");
+  }
+  
+  // Initialize pins
+  pinMode(MOTION_SENSOR_PIN, INPUT);
+  pinMode(FLAME_SENSOR_PIN, INPUT);
+  pinMode(ULTRASONIC_TRIG_PIN, OUTPUT);
+  pinMode(ULTRASONIC_ECHO_PIN, INPUT);
+  
+  // Connect to WiFi
+  logMessage("WiFi", "Connecting...");
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  
+  int wifiAttempts = 0;
+  while (WiFi.status() != WL_CONNECTED && wifiAttempts < 20) {
+    delay(500);
+    Serial.print(".");
+    wifiAttempts++;
+  }
+  
+  if (WiFi.status() == WL_CONNECTED) {
+    logMessage("WiFi", "Connected");
+    Serial.printf("IP: %s\n", WiFi.localIP().toString().c_str());
+  } else {
+    logMessage("ERROR", "WiFi connection failed");
+  }
+  
+  // Configure time for NTP
+  configTime(0, 0, "pool.ntp.org", "time.nist.gov");
+  
+  // Setup WebSocket connection
+  webSocket.begin(WS_SERVER, WS_PORT, WS_PATH);
+  webSocket.onEvent(webSocketEvent);
+  webSocket.setReconnectInterval(RECONNECT_INTERVAL);
+  
+  logMessage("SETUP", "Initialization complete");
+}
+
+// ============================================
+// MAIN LOOP
+// ============================================
+
+void loop() {
+  webSocket.loop();
+  
+  unsigned long currentTime = millis();
+  
+  // Handle reconnection attempts
+  if (!isConnected && (currentTime - lastReconnectAttempt) > RECONNECT_INTERVAL) {
+    logMessage("WS", "Attempting to reconnect...");
+    webSocket.disconnect();
+    delay(100);
+    webSocket.begin(WS_SERVER, WS_PORT, WS_PATH);
+    lastReconnectAttempt = currentTime;
+  }
+  
+  // Send heartbeat
+  if (isConnected && (currentTime - lastHeartbeat) > HEARTBEAT_INTERVAL) {
+    String heartbeat = createMessage("heartbeat");
+    webSocket.sendTXT(heartbeat);
+    lastHeartbeat = currentTime;
+    logMessage("WS", "Heartbeat sent");
+  }
+  
+  // Read sensors and send data (every 5 seconds)
+  static unsigned long lastSensorRead = 0;
+  if (isConnected && (currentTime - lastSensorRead) > 5000) {
+    readAllSensors();
+    sendSensorData();
+    lastSensorRead = currentTime;
+  }
+}
+
+// ============================================
+// SENSOR READING & SENDING FUNCTIONS
+// ============================================
+
+void readAllSensors() {
+  sensorData.temperature = readTemperature();
+  sensorData.humidity = readHumidity();
+  sensorData.flameDetected = readFlame();
+  sensorData.gasLevel = readGasLevel();
+  sensorData.motionDetected = readMotion();
+  sensorData.distance = readDistance();
+  sensorData.timestamp = getCurrentTimestamp();
+}
+
+void sendSensorData() {
+  // Send temperature
+  String tempMsg = createSensorMessage(
+    "temperature",
+    sensorData.temperature,
+    "°C",
+    getAlertLevel("temperature", sensorData.temperature)
+  );
+  webSocket.sendTXT(tempMsg);
+  
+  // Send humidity
+  String humMsg = createSensorMessage(
+    "humidity",
+    sensorData.humidity,
+    "%",
+    getAlertLevel("humidity", sensorData.humidity)
+  );
+  webSocket.sendTXT(humMsg);
+  
+  // Send gas level
+  String gasMsg = createSensorMessage(
+    "gas",
+    sensorData.gasLevel,
+    "ppm",
+    getAlertLevel("gas", sensorData.gasLevel)
+  );
+  webSocket.sendTXT(gasMsg);
+  
+  // Send flame detection
+  if (sensorData.flameDetected) {
+    String flameMsg = createSensorMessage("flame", 1, "bool", "critical");
+    webSocket.sendTXT(flameMsg);
+  }
+  
+  // Send motion detection
+  if (sensorData.motionDetected) {
+    String motionMsg = createSensorMessage("motion", 1, "bool", "warning");
+    webSocket.sendTXT(motionMsg);
+  }
+  
+  // Send distance
+  String distMsg = createSensorMessage(
+    "ultrasonic",
+    sensorData.distance,
+    "cm",
+    "normal"
+  );
+  webSocket.sendTXT(distMsg);
+}

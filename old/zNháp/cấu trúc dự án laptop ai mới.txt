@@ -1,0 +1,79 @@
+laptop-ai/
+│
+├── README.md
+├── requirements.txt
+├── .env.example
+├── .gitignore
+├── pyproject.toml
+│
+├── config/
+│   ├── __init__.py
+│   ├── settings.py              # Cấu hình chung (API keys, paths, etc)
+│   ├── constants.py             # Hằng số, thresholds
+│   └── logging_config.py        # Cấu hình logging
+│
+├── core/
+│   ├── __init__.py
+│   ├── websocket_client.py      # WebSocket client để kết nối server
+│   ├── message_handler.py       # Xử lý message từ server
+│   └── message_types.py         # Định nghĩa message types (enums)
+│
+├── ai/
+│   ├── __init__.py
+│   ├── voice/
+│   │   ├── __init__.py
+│   │   ├── speech_recognizer.py # Speech-to-text (STT)
+│   │   ├── text_to_speech.py    # Text-to-speech (TTS)
+│   │   └── voice_processor.py   # Xử lý audio input/output
+│   │
+│   ├── vision/
+│   │   ├── __init__.py
+│   │   ├── face_detector.py     # Face detection & recognition
+│   │   ├── object_detector.py   # Object detection
+│   │   └── motion_detector.py   # Motion detection
+│   │
+│   ├── nlp/
+│   │   ├── __init__.py
+│   │   ├── intent_classifier.py # Intent classification
+│   │   ├── entity_extractor.py  # Named entity recognition
+│   │   └── response_generator.py # Generate responses
+│   │
+│   └── behavior/
+│       ├── __init__.py
+│       ├── behavior_engine.py   # Behavior logic
+│       ├── emotion_engine.py    # Emotion system
+│       └── state_manager.py     # Manage robot state
+│
+├── models/
+│   ├── __init__.py
+│   ├── yolov8n.pt              # YOLOv8 pretrained
+│   ├── face_recognition_model.pkl # Face recognition model
+│   ├── intent_classifier.pkl   # Intent classifier
+│   └── README.md               # Model documentation
+│
+├── database/
+│   ├── __init__.py
+│   ├── db_manager.py           # Database operations
+│   ├── models.py               # SQLAlchemy models
+│   └── schemas.py              # Pydantic schemas
+│
+├── utils/
+│   ├── __init__.py
+│   ├── logger.py               # Custom logger
+│   ├── decorators.py           # Utility decorators
+│   ├── validators.py           # Input validators
+│   └── helpers.py              # Helper functions
+│
+├── tests/
+│   ├── __init__.py
+│   ├── unit/
+│   │   ├── test_voice.py
+│   │   ├── test_vision.py
+│   │   └── test_nlp.py
+│   │
+│   ├── integration/
+│   │   └── test_websocket.py
+│   │
+│   └── conftest.py
+│
+└── main.py                      # Entry point

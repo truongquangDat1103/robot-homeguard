@@ -1,0 +1,367 @@
+laptop_ai/
+│
+├── README.md
+├── pyproject.toml                  # Poetry (modern dependency management)
+├── poetry.lock
+├── setup.py                        # Backward compatibility
+├── requirements/                   # Split requirements by environment
+│   ├── base.txt
+│   ├── dev.txt
+│   ├── prod.txt
+│   └── gpu.txt
+│
+├── .env.example
+├── .env.local
+├── .gitignore
+├── .dockerignore
+├── .editorconfig
+│
+├── alembic/                        # Database migrations (if needed)
+│   ├── versions/
+│   └── env.py
+│
+├── config/                         # Configuration Layer
+│   ├── __init__.py
+│   ├── base.py                     # Base settings (Pydantic)
+│   ├── development.py              # Dev environment
+│   ├── staging.py                  # Staging environment
+│   ├── production.py               # Production environment
+│   ├── logging.yaml                # Structured logging config
+│   └── model_registry.yaml         # AI model configurations
+│
+├── src/
+│   ├── __init__.py
+│   │
+│   ├── domain/                     # 🎯 Domain Layer (Pure Business Logic)
+│   │   ├── __init__.py
+│   │   │
+│   │   ├── entities/               # Domain entities (Pure Python objects)
+│   │   │   ├── __init__.py
+│   │   │   ├── frame.py            # Video frame entity
+│   │   │   ├── face.py             # Face entity
+│   │   │   ├── voice_segment.py   # Audio segment entity
+│   │   │   ├── robot_state.py     # Robot state entity
+│   │   │   └── sensor_reading.py  # Sensor data entity
+│   │   │
+│   │   ├── value_objects/          # Immutable value objects
+│   │   │   ├── __init__.py
+│   │   │   ├── bounding_box.py
+│   │   │   ├── emotion.py
+│   │   │   ├── confidence_score.py
+│   │   │   └── timestamp.py
+│   │   │
+│   │   ├── repositories/           # Repository interfaces (DDD pattern)
+│   │   │   ├── __init__.py
+│   │   │   ├── face_repository.py
+│   │   │   ├── voice_repository.py
+│   │   │   └── behavior_repository.py
+│   │   │
+│   │   └── services/               # Domain services (business rules)
+│   │       ├── __init__.py
+│   │       ├── face_matching_service.py
+│   │       ├── behavior_decision_service.py
+│   │       └── anomaly_detection_service.py
+│   │
+│   ├── application/                # 📋 Application Layer (Use Cases)
+│   │   ├── __init__.py
+│   │   │
+│   │   ├── use_cases/              # Application use cases
+│   │   │   ├── __init__.py
+│   │   │   ├── process_video_frame.py
+│   │   │   ├── recognize_face.py
+│   │   │   ├── process_voice_command.py
+│   │   │   ├── generate_response.py
+│   │   │   └── detect_anomaly.py
+│   │   │
+│   │   ├── dto/                    # Data Transfer Objects
+│   │   │   ├── __init__.py
+│   │   │   ├── frame_dto.py
+│   │   │   ├── recognition_result_dto.py
+│   │   │   └── command_dto.py
+│   │   │
+│   │   └── handlers/               # Command/Query handlers (CQRS pattern)
+│   │       ├── __init__.py
+│   │       ├── commands/
+│   │       │   ├── recognize_face_command.py
+│   │       │   └── process_audio_command.py
+│   │       └── queries/
+│   │           ├── get_face_embeddings_query.py
+│   │           └── get_robot_state_query.py
+│   │
+│   ├── infrastructure/             # 🔌 Infrastructure Layer
+│   │   ├── __init__.py
+│   │   │
+│   │   ├── ml/                     # ML Model Infrastructure
+│   │   │   ├── __init__.py
+│   │   │   │
+│   │   │   ├── vision/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── face_detector.py        # YOLO/MTCNN implementation
+│   │   │   │   ├── face_recognizer.py      # FaceNet/ArcFace implementation
+│   │   │   │   ├── object_detector.py      # Object detection
+│   │   │   │   ├── pose_estimator.py       # MediaPipe pose
+│   │   │   │   └── motion_detector.py      # OpenCV background subtraction
+│   │   │   │
+│   │   │   ├── audio/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── stt_engine.py           # Whisper/Vosk
+│   │   │   │   ├── tts_engine.py           # Coqui TTS
+│   │   │   │   ├── voice_recognition.py    # Speaker identification
+│   │   │   │   ├── sound_classifier.py     # YAMNet/PANNs
+│   │   │   │   └── vad.py                  # Voice Activity Detection
+│   │   │   │
+│   │   │   ├── nlp/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── llm_client.py           # OpenAI/Anthropic/Ollama
+│   │   │   │   ├── intent_classifier.py    # BERT-based classifier
+│   │   │   │   ├── entity_extractor.py     # spaCy NER
+│   │   │   │   ├── sentiment_analyzer.py   # Sentiment analysis
+│   │   │   │   └── embedding_service.py    # Sentence embeddings
+│   │   │   │
+│   │   │   ├── model_loader.py             # Model lazy loading & caching
+│   │   │   ├── inference_engine.py         # Unified inference interface
+│   │   │   └── model_registry.py           # Model version management
+│   │   │
+│   │   ├── persistence/            # Data Persistence
+│   │   │   ├── __init__.py
+│   │   │   ├── repositories/
+│   │   │   │   ├── face_repository_impl.py
+│   │   │   │   ├── voice_repository_impl.py
+│   │   │   │   └── behavior_repository_impl.py
+│   │   │   ├── cache/
+│   │   │   │   ├── redis_cache.py
+│   │   │   │   └── memory_cache.py
+│   │   │   └── database/
+│   │   │       ├── connection.py
+│   │   │       └── models.py               # SQLAlchemy models
+│   │   │
+│   │   ├── messaging/              # Message Bus / Event Driven
+│   │   │   ├── __init__.py
+│   │   │   ├── websocket/
+│   │   │   │   ├── client.py               # WebSocket client
+│   │   │   │   ├── reconnection_manager.py
+│   │   │   │   ├── message_router.py
+│   │   │   │   └── protocol.py             # Message protocol definitions
+│   │   │   ├── event_bus.py                # In-process event bus
+│   │   │   ├── message_queue.py            # RabbitMQ/Redis Queue (optional)
+│   │   │   └── pub_sub.py                  # Pub/Sub pattern
+│   │   │
+│   │   ├── hardware/               # Hardware Abstraction Layer
+│   │   │   ├── __init__.py
+│   │   │   ├── camera/
+│   │   │   │   ├── camera_interface.py
+│   │   │   │   ├── opencv_camera.py
+│   │   │   │   ├── webcam_camera.py
+│   │   │   │   └── ip_camera.py
+│   │   │   └── audio/
+│   │   │       ├── audio_interface.py
+│   │   │       ├── microphone.py
+│   │   │       └── audio_stream.py
+│   │   │
+│   │   ├── external/               # External Service Clients
+│   │   │   ├── __init__.py
+│   │   │   ├── openai_client.py
+│   │   │   ├── anthropic_client.py
+│   │   │   └── cloud_storage.py
+│   │   │
+│   │   └── monitoring/             # Observability
+│   │       ├── __init__.py
+│   │       ├── metrics.py          # Prometheus metrics
+│   │       ├── tracing.py          # OpenTelemetry tracing
+│   │       ├── logging.py          # Structured logging
+│   │       └── health_check.py     # Health check endpoints
+│   │
+│   ├── interfaces/                 # 🌐 Interface Layer (API/CLI)
+│   │   ├── __init__.py
+│   │   │
+│   │   ├── api/                    # REST API (FastAPI) - for debugging
+│   │   │   ├── __init__.py
+│   │   │   ├── main.py
+│   │   │   ├── dependencies.py
+│   │   │   ├── v1/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── camera.py
+│   │   │   │   ├── voice.py
+│   │   │   │   ├── behavior.py
+│   │   │   │   └── health.py
+│   │   │   └── schemas/
+│   │   │       ├── request.py
+│   │   │       └── response.py
+│   │   │
+│   │   ├── websocket/              # WebSocket Interface
+│   │   │   ├── __init__.py
+│   │   │   ├── handlers.py
+│   │   │   └── events.py
+│   │   │
+│   │   └── cli/                    # CLI Interface (Typer)
+│   │       ├── __init__.py
+│   │       ├── main.py
+│   │       ├── commands/
+│   │       │   ├── train.py
+│   │       │   ├── collect_data.py
+│   │       │   └── benchmark.py
+│   │       └── utils.py
+│   │
+│   ├── core/                       # 🛠️ Core Utilities (Shared Kernel)
+│   │   ├── __init__.py
+│   │   ├── exceptions.py           # Custom exceptions
+│   │   ├── constants.py            # Global constants
+│   │   ├── enums.py                # Enumerations
+│   │   ├── types.py                # Custom types
+│   │   │
+│   │   ├── utils/
+│   │   │   ├── __init__.py
+│   │   │   ├── image_utils.py
+│   │   │   ├── audio_utils.py
+│   │   │   ├── math_utils.py
+│   │   │   ├── time_utils.py
+│   │   │   └── validation.py
+│   │   │
+│   │   ├── decorators/
+│   │   │   ├── __init__.py
+│   │   │   ├── retry.py
+│   │   │   ├── cache.py
+│   │   │   ├── timing.py
+│   │   │   └── async_utils.py
+│   │   │
+│   │   └── middleware/
+│   │       ├── __init__.py
+│   │       ├── error_handler.py
+│   │       ├── rate_limiter.py
+│   │       └── request_id.py
+│   │
+│   └── workers/                    # 🏃 Background Workers
+│       ├── __init__.py
+│       ├── camera_worker.py        # Camera processing worker
+│       ├── audio_worker.py         # Audio processing worker
+│       ├── llm_worker.py           # LLM inference worker
+│       └── notification_worker.py  # Notification sender
+│
+├── tests/                          # 🧪 Testing Suite
+│   ├── __init__.py
+│   ├── conftest.py                 # Pytest fixtures
+│   │
+│   ├── unit/                       # Unit tests
+│   │   ├── domain/
+│   │   ├── application/
+│   │   └── infrastructure/
+│   │
+│   ├── integration/                # Integration tests
+│   │   ├── test_websocket.py
+│   │   ├── test_camera_pipeline.py
+│   │   └── test_voice_pipeline.py
+│   │
+│   ├── e2e/                        # End-to-end tests
+│   │   └── test_full_flow.py
+│   │
+│   ├── performance/                # Performance tests
+│   │   ├── test_inference_speed.py
+│   │   └── test_memory_usage.py
+│   │
+│   └── fixtures/                   # Test data
+│       ├── images/
+│       ├── videos/
+│       └── audio/
+│
+├── scripts/                        # 🚀 DevOps & Automation
+│   ├── setup.sh
+│   ├── build.sh
+│   ├── deploy.sh
+│   ├── collect_training_data.py
+│   ├── train_face_model.py
+│   ├── benchmark_models.py
+│   └── migrate_database.py
+│
+├── docker/                         # 🐳 Docker & Kubernetes
+│   ├── Dockerfile
+│   ├── Dockerfile.gpu
+│   ├── Dockerfile.dev
+│   ├── docker-compose.yml
+│   ├── docker-compose.dev.yml
+│   └── k8s/
+│       ├── deployment.yaml
+│       ├── service.yaml
+│       ├── configmap.yaml
+│       └── secret.yaml
+│
+├── models/                         # 🤖 Pre-trained Models
+│   ├── README.md
+│   ├── vision/
+│   │   ├── yolov8n.pt
+│   │   ├── facenet.pth
+│   │   └── mediapipe/
+│   ├── audio/
+│   │   ├── whisper-base.pt
+│   │   └── speaker_embeddings/
+│   └── nlp/
+│       └── bert-base-uncased/
+│
+├── data/                           # 📊 Data Storage
+│   ├── README.md
+│   ├── raw/                        # Raw collected data
+│   ├── processed/                  # Processed data
+│   ├── embeddings/                 # Face/voice embeddings
+│   │   ├── faces/
+│   │   └── voices/
+│   └── logs/                       # Application logs
+│
+├── notebooks/                      # 📓 Research & Experiments
+│   ├── 01_face_recognition_research.ipynb
+│   ├── 02_voice_training.ipynb
+│   ├── 03_behavior_analysis.ipynb
+│   └── 04_model_optimization.ipynb
+│
+├── docs/                           # 📚 Documentation
+│   ├── README.md
+│   ├── architecture/
+│   │   ├── overview.md
+│   │   ├── domain_model.md
+│   │   ├── data_flow.md
+│   │   └── deployment.md
+│   ├── api/
+│   │   ├── websocket_protocol.md
+│   │   └── rest_api.md
+│   ├── models/
+│   │   ├── face_recognition.md
+│   │   ├── voice_recognition.md
+│   │   └── llm_integration.md
+│   └── guides/
+│       ├── setup.md
+│       ├── training.md
+│       └── deployment.md
+│
+├── .github/                        # CI/CD
+│   ├── workflows/
+│   │   ├── ci.yml
+│   │   ├── cd.yml
+│   │   └── tests.yml
+│   └── dependabot.yml
+│
+├── monitoring/                     # 📊 Monitoring Config
+│   ├── prometheus.yml
+│   ├── grafana/
+│   │   └── dashboards/
+│   └── alerting/
+│       └── rules.yml
+│
+└── benchmarks/                     # ⚡ Performance Benchmarks
+    ├── inference_benchmarks.py
+    ├── memory_benchmarks.py
+    └── results/
+```
+
+---
+
+## 🏗️ **Kiến Trúc Áp Dụng**
+
+### **1. Clean Architecture (Uncle Bob)**
+```
+┌─────────────────────────────────────────┐
+│         Interfaces Layer (API/CLI)       │  ← Controllers, WebSocket
+├─────────────────────────────────────────┤
+│      Application Layer (Use Cases)       │  ← Business workflows
+├─────────────────────────────────────────┤
+│        Domain Layer (Entities)           │  ← Pure business logic
+├─────────────────────────────────────────┤
+│    Infrastructure Layer (ML/DB/Cache)    │  ← External dependencies
+└─────────────────────────────────────────┘

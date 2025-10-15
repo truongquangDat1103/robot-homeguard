@@ -1,0 +1,147 @@
+robot_pet_homeguard/ # Thư mục gốc dự án Robot Pet HomeGuard
+│
+├── README.md # Giới thiệu tổng quan dự án, cách chạy
+├── requirements.txt # Danh sách thư viện Python cần cài (torch, transformers, pyttsx3,…)
+│
+├── database/ # Quản lý cơ sở dữ liệu
+│ └── schema.sql # Định nghĩa bảng: sensor_data, behavior_log, voice_log, actuator_commands
+│
+├── docs/ # Tài liệu mô tả & phân tích hệ thống
+│ ├── architecture.md # Mô tả kiến trúc, sơ đồ class / module
+│ └── setup_guide.md # Hướng dẫn cài đặt (ESP32, Laptop AI, Database)
+│
+├── esp32/ # Code chạy trên ESP32 (Arduino/PlatformIO)
+│ ├── platformio.ini
+│ ├── .gitignore
+│ ├── .vscode/
+│ │ ├── settings.json
+│ │ └── extensions.json
+│ │
+│ ├── include/
+│ │ ├── README
+│ │ └── pins.h
+│ │
+│ ├── lib/
+│ │ ├── README
+│ │ ├── DHTSensor/
+│ │ │ ├── DHTSensor.cpp
+│ │ │ └── DHTSensor.h
+│ │ ├── FlameSensor/
+│ │ │ ├── FlameSensor.cpp
+│ │ │ └── FlameSensor.h
+│ │ ├── GasSensor/
+│ │ │ ├── GasSensor.cpp
+│ │ │ └── GasSensor.h
+│ │ ├── Microphone/
+│ │ │ ├── Microphone.cpp
+│ │ │ └── Microphone.h
+│ │ ├── MotionSensor/
+│ │ │ ├── MotionSensor.cpp
+│ │ │ └── MotionSensor.h
+│ │ ├── Screen/
+│ │ │ ├── Screen.cpp
+│ │ │ ├── Screen.h
+│ │ │ ├── User_Setup.h
+│ │ │ └── video01.h ... video12.h
+│ │ ├── Speaker/
+│ │ │ ├── readme
+│ │ │ ├── Speaker.cpp
+│ │ │ ├── Speaker.h
+│ │ │ ├── SpeakerI2S.cpp
+│ │ │ └── SpeakerI2S.h
+│ │ ├── ultrasonic/
+│ │ │ ├── UltrasonicSensor.h
+│ │ │ └── UltrasonicSensor.h.cpp
+| | ├── WiFiConnector/
+│ │ | ├── WiFiConnector.cpp
+│ │ | └── WiFiConnector.h
+| | ├── websocketclient/
+│ │ | ├── websocketclient.cpp
+│ │ | └── websocketclient.h
+| | 
+│ │
+│ ├── src/
+│ │ ├── main.cpp
+│ │ ├── robot.cpp
+│ │ └── robot.h
+│ │
+│ └── test/
+│ └── README
+│
+├── laptop_ai/ # Mã chạy trên laptop/PC (Python)
+│ ├── __init__.py
+│ ├── main.py
+│ ├── config.py
+│ ├── RobotAssistant.py
+│ │
+│ ├── controllers/
+│ │ ├── __init__.py
+│ │ ├── command_handler.py
+│ │ └── robot_controller.py
+│ │
+│ ├── model/
+│ │ ├── __init__.py
+│ │ ├── behavior/
+│ │ │ ├── __init__.py
+│ │ │ └── behavior.py
+│ │ ├── llm/
+│ │ │ ├── __init__.py
+│ │ │ └── qwen_llm.py
+│ │ ├── nlp/
+│ │ │ ├── __init__.py
+│ │ │ └── nlp_parser.py
+│ │ └── vision/
+│ │ ├── __init__.py
+│ │ ├── face_recognizer.py
+│ │ ├── motion_detector.py
+│ │ └── human_detection/
+│ │ ├── __init__.py
+│ │ ├── hog_detector.py
+│ │ ├── mediapipe_detector.py
+│ │ └── openpose_detector.py
+│ │
+│ ├── speech/
+│ │ ├── __init__.py
+│ │ ├── stt/
+│ │ │ ├── __init__.py
+│ │ │ └── whisper_stt.py
+│ │ └── tts/
+│ │ ├── __init__.py
+│ │ └── pyttsx3_tts.py
+│ │
+│ ├── audio/
+│ │ ├── __init__.py
+│ │ ├── recorder.py
+│ │ └── player.py
+│ │
+│ ├── communication/
+│ │ ├── __init__.py
+│ │ ├── mqtt_client.py
+│ │ ├── websocket_client.py
+│ │ └── test.py
+│ │
+│ ├── utils/
+│ │ ├── __init__.py
+│ │ ├── video_stream.py
+│ │ └── logger.py
+│ │
+│ └── recordings/
+│ └── recording_20250905_173139.wav
+│
+├── recordings/ # Thư mục chứa các bản ghi âm
+│ ├── recording_20250912_031327.wav
+│ ├── recording_20250912_040912.wav
+│ ├── recording_20250912_041055.wav
+│ ├── (nhiều file .wav khác...)
+│
+├── saveaudio/
+│ ├── test_tts.wav
+│ ├── ai_response.wav
+│ └── recording_20250906_052112.wav
+│
+├── known_faces/
+│ ├── WIN_20250906_09_35_13_Pro.jpg
+│ └── WIN_20250906_09_35_14_Pro.jpg
+│
+└── (thêm file __pycache__ / .pyc và các tài nguyên nhị phân trong workspace)
+
