@@ -4,10 +4,10 @@ Cung cấp log có màu trên console và tự động xoay, lưu trữ file log
 """
 
 import sys
-from pathlib import Path
-from typing import Optional
-from loguru import logger
-from config.settings import settings
+from pathlib import Path                                                # Để thao tác với đường dẫn file
+from typing import Optional                                             # Để định nghĩa kiểu dữ liệu tùy chọn                 
+from loguru import logger                                               # Thư viện loguru để ghi log dễ dàng, có màu sắc                    
+from config.settings import settings                                    # Cấu hình chung của dự án                          
 
 
 def setup_logger(

@@ -28,7 +28,7 @@ redis = "^5.0.1"
 sqlalchemy = "^2.0.23"
 
 # Utilities
-loguru = "^0.7.2"
+loguru = "^0.7.3"
 tenacity = "^8.2.3"  # Retry logic
 asyncio = "^3.4.3"
 

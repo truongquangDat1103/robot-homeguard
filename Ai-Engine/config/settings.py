@@ -2,9 +2,9 @@
 Configuration management using Pydantic Settings.
 Type-safe configuration with environment variable loading.
 """
-from typing import List, Literal
-from pydantic import Field, field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from typing import List, Literal                                                        # Thư viện chuẩn để hỗ trợ chú thích kiểu dữ liệu
+from pydantic import Field, field_validator                                             # Thư viện để định nghĩa và xác thực mô hình dữ liệu                                    
+from pydantic_settings import BaseSettings, SettingsConfigDict                          # Thư viện để quản lý cấu hình ứng dụng                   
 
 
 class WebSocketSettings(BaseSettings):

@@ -2,16 +2,16 @@
 Điểm khởi động ứng dụng AI-Engine
 Quản lý vòng đời và điều phối chính của hệ thống
 """
-import asyncio
-import signal
-import sys
-from typing import Optional
+import asyncio                                                  # Thư viện chuẩn để làm việc với các tác vụ bất đồng bộ
+import signal                                                   # Thư viện chuẩn để xử lý tín hiệu hệ thống
+import sys                                                      # Thư viện chuẩn để tương tác với hệ thống                                                   
+from typing import Optional                                     # Thư viện chuẩn để hỗ trợ chú thích kiểu dữ liệu                  
 
-from loguru import logger
+from loguru import logger                                       # Thư viện ghi log nâng cao                                           
 
-from config.settings import settings
-from src.utils.logger import setup_logger
-from src.utils.constants import SystemStatus
+from config.settings import settings                            # Cấu hình ứng dụng                                         
+from src.utils.logger import setup_logger                       # Hàm thiết lập cấu hình ghi log                                    
+from src.utils.constants import SystemStatus                    # Các hằng số và enum dùng trong hệ thống                               
 
 
 class AIEngine:

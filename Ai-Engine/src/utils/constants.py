@@ -1,7 +1,7 @@
 """
 Các hằng số và kiểu liệt kê toàn cục cho AI-Engine.
 """
-from enum import Enum, IntEnum
+from enum import Enum, IntEnum                                   # Để định nghĩa kiểu liệt kê (Enum)                                    
 
 
 # ==========================================
