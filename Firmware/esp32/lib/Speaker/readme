@@ -1,0 +1,116 @@
+🔊 Speaker.h
+#ifndef SPEAKER_H
+#define SPEAKER_H
+
+#include <Arduino.h>
+#include <driver/i2s.h>
+
+class Speaker {
+private:
+    i2s_port_t i2s_num;
+public:
+    Speaker(i2s_port_t port = I2S_NUM_0);
+    void begin(int bclk, int lrc, int din);
+    void playBuffer(int16_t *buffer, size_t samples);
+};
+
+#endif
+
+Speaker.cpp
+#include "Speaker.h"
+
+Speaker::Speaker(i2s_port_t port) : i2s_num(port) {}
+
+void Speaker::begin(int bclk, int lrc, int din) {
+    i2s_config_t config = {
+        .mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_TX),
+        .sample_rate = 16000,
+        .bits_per_sample = I2S_BITS_PER_SAMPLE_16BIT,
+        .channel_format = I2S_CHANNEL_FMT_ONLY_LEFT,
+        .communication_format = I2S_COMM_FORMAT_STAND_I2S,
+        .intr_alloc_flags = 0,
+        .dma_buf_count = 4,
+        .dma_buf_len = 1024,
+        .use_apll = false
+    };
+    i2s_pin_config_t pinConfig = {
+        .bck_io_num = bclk,
+        .ws_io_num = lrc,
+        .data_out_num = din,
+        .data_in_num = I2S_PIN_NO_CHANGE
+    };
+    i2s_driver_install(i2s_num, &config, 0, NULL);
+    i2s_set_pin(i2s_num, &pinConfig);
+}
+
+void Speaker::playBuffer(int16_t *buffer, size_t samples) {
+    size_t bytesWritten;
+    i2s_write(i2s_num, buffer, samples * sizeof(int16_t), &bytesWritten, portMAX_DELAY);
+}
+
+🎛️ AudioController.h
+#ifndef AUDIOCONTROLLER_H
+#define AUDIOCONTROLLER_H
+
+#include "Microphone.h"
+#include "Speaker.h"
+
+class AudioController {
+private:
+    Microphone *mic;
+    Speaker *spk;
+    static const int bufferSize = 16000;
+    int16_t buffer[bufferSize];
+
+public:
+    AudioController(Microphone *m, Speaker *s);
+    void begin();
+    void recordAndPlay(int seconds);
+};
+
+#endif
+
+AudioController.cpp
+#include "AudioController.h"
+
+AudioController::AudioController(Microphone *m, Speaker *s)
+: mic(m), spk(s) {}
+
+void AudioController::begin() {
+    Serial.begin(115200);
+    mic->begin();
+    spk->begin(26, 25, 22);
+}
+
+void AudioController::recordAndPlay(int seconds) {
+    int sampleRate = 16000;
+    int totalSamples = sampleRate * seconds;
+    if (totalSamples > bufferSize) totalSamples = bufferSize;
+
+    Serial.println("🎙️ Ghi âm...");
+    for (int i = 0; i < totalSamples; i++) {
+        int val = mic->read();           // 0–4095 (ADC 12-bit)
+        buffer[i] = (val - 2048) * 16;   // Chuẩn hóa sang 16-bit signed
+        delayMicroseconds(62);           // ~16kHz sample rate
+    }
+
+    Serial.println("🔊 Phát lại...");
+    spk->playBuffer(buffer, totalSamples);
+}
+
+🧠 main.ino
+#include "Microphone.h"
+#include "Speaker.h"
+#include "AudioController.h"
+
+Microphone mic(34);
+Speaker spk;
+AudioController system(&mic, &spk);
+
+void setup() {
+  system.begin();
+}
+
+void loop() {
+  system.recordAndPlay(3); // Thu 3 giây rồi phát lại
+  delay(2000);

@@ -1,0 +1,10 @@
+Linh kiện	Dòng tiêu thụ ước tính (mA)
+MQ-2 (Gas)	300 mA
+PIR	50 mA
+DHT22	5 mA
+TFT ST7789	100 mA
+MAX9814 (Micro)	5 mA
+MAX98357A (Khuếch đại âm thanh)	250 mA
+2 Loa 4Ω–3W	300 mA
+ESP32	250 mA
+SRF05 (Siêu âm)	15 mA
