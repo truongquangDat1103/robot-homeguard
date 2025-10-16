@@ -1,69 +1,95 @@
+# ============================================================
+#  Thông tin chung của dự án Poetry
+#       Khai báo thông tin dự án
+# ============================================================
 [tool.poetry]
-name = "ai-engine"
-version = "0.1.0"
-description = "AI Engine for Robot with Vision, Audio, and NLP capabilities"
-authors = ["Your Name <your.email@example.com>"]
-readme = "README.md"
-packages = [{include = "src"}]
+name = "ai-engine"                                                                      # Tên gói Python (package name)
+version = "0.1.0"                                                                       # Phiên bản hiện tại của dự án
+description = "AI Engine for Robot with Vision, Audio, and NLP capabilities"            # Mô tả ngắn
+authors = ["Trương Quang Đạt <truongquangdat1103#gmail.com>"]                           # Danh sách tác giả
+readme = "README.md"                                                                    # File mô tả chi tiết hiển thị trên PyPI
+packages = [{include = "src"}]                                                          # Thư mục chứa mã nguồn chính là "src/"
 
+# ============================================================
+#  Khai báo dependencies chính (chạy trong môi trường runtime)
+#               Gồm các thư viện mà dự án cần
+# ============================================================
 [tool.poetry.dependencies]
-python = "^3.10"
-# Core
-pydantic = "^2.5.0"
-pydantic-settings = "^2.1.0"
-python-dotenv = "^1.0.0"
-pyyaml = "^6.0.1"
+python = "^3.10"                                                                        # Yêu cầu Python >=3.10, <4.0
 
+# --- Core libraries ---
+pydantic = "^2.5.0"                                                                     # Validate dữ liệu mạnh mẽ, dựa trên type hints
+pydantic-settings = "^2.1.0"                                                            # Dễ dàng load config từ .env hoặc biến môi trường
+python-dotenv = "^1.0.0"                                                                # Đọc file .env để load các biến môi trường
+pyyaml = "^6.0.1"                                                                       # Đọc/ghi file YAML (thường dùng cho config nâng cao)
 
-# WebSocket & Networking
-websockets = "^12.0"
-aiohttp = "^3.9.0"
+# --- WebSocket & Networking ---
+websockets = "^12.0"                                                                    # Xử lý kết nối WebSocket (gửi/nhận dữ liệu real-time)
+aiohttp = "^3.9.0"                                                                      # Thư viện HTTP async, có thể dùng cho API client hoặc server
 
-# Web Framework (optional, for debugging)
-fastapi = "^0.109.0"
-uvicorn = {extras = ["standard"], version = "^0.25.0"}
+# --- Web Framework (optional, for debugging or REST API) ---
+fastapi = "^0.109.0"                                                                    # Framework web bất đồng bộ (ASGI), hiệu năng cao
+uvicorn = {extras = ["standard"], version = "^0.25.0"}                                  # Server chạy FastAPI, hỗ trợ hot reload
 
-# Database & Cache
-redis = "^5.0.1"
-sqlalchemy = "^2.0.23"
+# --- Database & Cache ---
+redis = "^5.0.1"                                                                        # Dùng Redis làm cache hoặc message broker
+sqlalchemy = "^2.0.23"                                                                  # ORM để làm việc với database (Postgres, SQLite, v.v.)
 
-# Utilities
-loguru = "^0.7.3"
-tenacity = "^8.2.3"  # Retry logic
-asyncio = "^3.4.3"
+# --- Utilities ---
+loguru = "^0.7.3"                                                                       # Logging nâng cao, dễ dùng hơn logging mặc định
+tenacity = "^8.2.3"                                                                     # Cung cấp decorator retry khi gặp lỗi tạm thời (retry logic)
+asyncio = "^3.4.3"                                                                      # Quản lý luồng bất đồng bộ (nếu cần cho Python cũ, tùy chọn)
 
+# ============================================================
+#  Nhóm dependencies cho môi trường phát triển (dev)
+# ============================================================
 [tool.poetry.group.dev.dependencies]
-pytest = "^7.4.3"
-pytest-asyncio = "^0.21.1"
-pytest-cov = "^4.1.0"
-black = "^23.12.0"
-isort = "^5.13.0"
-flake8 = "^7.0.0"
-mypy = "^1.7.0"
-ipython = "^8.18.0"
-jupyter = "^1.0.0"
+pytest = "^7.4.3"                                                                       # Thư viện test chính
+pytest-asyncio = "^0.21.1"                                                              # Hỗ trợ test async function
+pytest-cov = "^4.1.0"                                                                   # Đo độ bao phủ code (coverage)
+black = "^23.12.0"                                                                      # Code formatter tự động (theo chuẩn PEP8),         
+isort = "^5.13.0"                                                                       # Tự động sắp xếp import
+flake8 = "^7.0.0"                                                                       # Kiểm tra linting (chất lượng code)
+mypy = "^1.7.0"                                                                         # Kiểm tra kiểu dữ liệu tĩnh (type hint checking)
+ipython = "^8.18.0"                                                                     # Shell Python nâng cao
+jupyter = "^1.0.0"                                                                      # Notebook môi trường tương tác (thử nghiệm mô hình, demo, v.v.)
 
+# ============================================================
+#  Hệ thống build của Poetry
+# ============================================================
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core"]                                                              # Gói cần thiết để build
+build-backend = "poetry.core.masonry.api"                                               # Backend mặc định của Poetry
 
+# ============================================================
+#  Cấu hình code formatter: Black
+# ============================================================
 [tool.black]
-line-length = 100
-target-version = ['py310']
+line-length = 100                                                                       # Giới hạn độ dài dòng tối đa
+target-version = ['py310']                                                              # Nhắm tới phiên bản Python 3.10
 
+# ============================================================
+#  Cấu hình sắp xếp import: isort
+# ============================================================
 [tool.isort]
-profile = "black"
-line_length = 100
+profile = "black"                                                                       # Tự động đồng bộ với quy tắc của Black
+line_length = 100                                                                       # Giới hạn dòng giống Black
 
+# ============================================================
+#  Cấu hình kiểm tra kiểu dữ liệu: mypy
+# ============================================================
 [tool.mypy]
-python_version = "3.10"
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = true
+python_version = "3.10"                                                                 # Phiên bản Python dùng để check
+warn_return_any = true                                                                  # Cảnh báo nếu hàm trả về kiểu Any
+warn_unused_configs = true                                                              # Cảnh báo cấu hình không dùng
+disallow_untyped_defs = true                                                            # Bắt buộc mọi hàm phải có type hints
 
+# ============================================================
+#  Cấu hình test: pytest
+# ============================================================
 [tool.pytest.ini_options]
-testpaths = ["tests"]
-python_files = ["test_*.py"]
-python_classes = ["Test*"]
-python_functions = ["test_*"]
-asyncio_mode = "auto"
+testpaths = ["tests"]                                                                   # Thư mục chứa test
+python_files = ["test_*.py"]                                                            # File test bắt đầu bằng test_
+python_classes = ["Test*"]                                                              # Lớp test bắt đầu bằng Test
+python_functions = ["test_*"]                                                           # Hàm test bắt đầu bằng test_
+asyncio_mode = "auto"                                                                   # Tự động hỗ trợ async test (quan trọng cho async code)
