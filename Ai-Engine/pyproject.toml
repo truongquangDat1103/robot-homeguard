@@ -23,6 +23,13 @@ pydantic-settings = "^2.1.0"                                                    
 python-dotenv = "^1.0.0"                                                                # Đọc file .env để load các biến môi trường
 pyyaml = "^6.0.1"                                                                       # Đọc/ghi file YAML (thường dùng cho config nâng cao)
 
+# --- Vision ---
+opencv-python = "^4.8.1"                                                                # Thư viện xử lý ảnh/video phổ biến, hỗ trợ nhiều thuật toán CV
+numpy = "^1.24.0"                                                                       # Xử lý mảng số học hiệu năng cao, nền tảng cho hầu hết thư viện ML/CV
+pillow = "^10.1.0"                                                                      # Thư viện xử lý ảnh cơ bản (mở, lưu, resize, filter...)
+ultralytics = "^8.0.0"                                                                  # YOLOv8 - model phát hiện vật thể hiện đại, dễ dùng
+mediapipe = "^0.10.0"                                                                   # Framework của Google cho real-time pose/face/hand detection
+
 # --- WebSocket & Networking ---
 websockets = "^12.0"                                                                    # Xử lý kết nối WebSocket (gửi/nhận dữ liệu real-time)
 aiohttp = "^3.9.0"                                                                      # Thư viện HTTP async, có thể dùng cho API client hoặc server

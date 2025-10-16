@@ -9,7 +9,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict                  
 
 class WebSocketSettings(BaseSettings):
     """Cấu hình kết nối WebSocket."""
-    url: str = Field(default="ws://192.168.1.100:8080/ws")
+    url: str = Field(default="ws://localhost:8080/ws")
     reconnect_interval: int = Field(default=5, ge=1, le=60)
     max_retries: int = Field(default=10, ge=1)
     ping_interval: int = Field(default=30, ge=10)
