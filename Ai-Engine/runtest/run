@@ -1,0 +1,3 @@
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+& "C:\Users\truon\AppData\Local\pypoetry\Cache\virtualenvs\ai-engine-bJgVeTAv-py3.11\Scripts\activate.ps1"
+poetry run python -m Examples.testcam  

@@ -274,8 +274,8 @@ String WebSocketClient::connectionTypeToString(ConnectionType type) const {
   switch (type) {
     case ConnectionType::ESP32_TYPE:
       return "esp32";
-    case ConnectionType::LAPTOP_AI:
-      return ""ai_engine";
+    case ConnectionType::AI_ENGINE:
+      return "ai_engine";
     case ConnectionType::WEB_CLIENT:
       return "web_client";
     case ConnectionType::MOBILE:

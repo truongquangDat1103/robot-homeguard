@@ -37,18 +37,18 @@ void Robot::begin() {
 }
 
 void Robot::run() {
-    // screen.playAll();
+    //screen.playAll();
     //wsClient.update();
     // ultrasonicSensor.printDistance();
     // gasSensor.printGas();
     // dhtSensor.printValues();
     // motionSensor.printState();
-    // flameSensor.printState();
+     flameSensor.printState();
     
     //speaker.loop();
     // microphone.record(1); // Ghi âm 5 giây
     // microphone.printBuffer(1000); // In ra 16000 mẫu đầu tiên
-    delay(100); // Giãn cách 2 giây
+    delay(500); // Giãn cách 2 giây
 }
 
 void Robot::onWebSocketConnected() {

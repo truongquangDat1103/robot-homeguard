@@ -1,0 +1,109 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+model SensorData {
+  id          String     @id @default(cuid())
+  deviceId    String
+  sensorType  SensorType
+  value       Float
+  unit        String
+  timestamp   DateTime   @default(now())
+
+  @@index([deviceId, timestamp])
+  @@map("sensor_data")
+}
+
+enum SensorType {
+  TEMPERATURE
+  HUMIDITY
+  LIGHT
+  MOTION
+  DISTANCE
+  GAS
+  SOUND
+}
+
+model BehaviorLog {
+  id          String   @id @default(cuid())
+  robotId     String
+  behavior    String
+  description String?
+  metadata    Json?
+  timestamp   DateTime @default(now())
+
+  @@index([robotId, timestamp])
+  @@map("behavior_logs")
+}
+
+model VoiceLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  command    String
+  response   String?
+  confidence Float?
+  timestamp  DateTime @default(now())
+
+  @@index([userId, timestamp])
+  @@map("voice_logs")
+}
+
+model ActuatorCommand {
+  id         String        @id @default(cuid())
+  deviceId   String
+  commandType CommandType
+  command    String
+  parameters Json?
+  status     CommandStatus @default(PENDING)
+  sentAt     DateTime      @default(now())
+  executedAt DateTime?
+
+  @@index([deviceId, status])
+  @@map("actuator_commands")
+}
+
+enum CommandType {
+  MOVEMENT
+  EMOTION
+  ACTION
+  SYSTEM
+}
+
+enum CommandStatus {
+  PENDING
+  SENT
+  EXECUTED
+  FAILED
+  TIMEOUT
+}
+
+model Settings {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     Json
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}

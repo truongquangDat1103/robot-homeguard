@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: homeguard-api
+  labels:
+    app: homeguard-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: homeguard-api
+  template:
+    metadata:
+      labels:
+        app: homeguard-api
+    spec:
+      containers:
+      - name: api
+        image: your-docker-username/homeguard-api:latest
+        ports:
+        - containerPort: 4000
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: homeguard-secrets
+              key: database-url
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: homeguard-secrets
+              key: redis-url
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: homeguard-secrets
+              key: jwt-secret
+        - name: API_PORT
+          value: "4000"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 4000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 4000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: homeguard-api-service
+spec:
+  selector:
+    app: homeguard-api
+  ports:
+  - protocol: TCP
+    port: 4000
+    targetPort: 4000
+  type: ClusterIP

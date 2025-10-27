@@ -1,267 +1,199 @@
 homeguard-platform/
 │
-├── README.md
-├── package.json                    # Root package.json cho monorepo
-├── pnpm-workspace.yaml             # PNPM workspace config
-├── turbo.json                      # Turborepo config
-├── .env.example
-├── .gitignore
-├── docker-compose.yml              # Docker setup cho toàn bộ stack
+├── README.md                            # Tài liệu hướng dẫn tổng quan dự án: setup, kiến trúc, deploy
+├── package.json                         # Cấu hình dependencies, scripts cho toàn monorepo
+├── pnpm-workspace.yaml                  # Định nghĩa workspace của PNPM, liên kết các apps & packages
+├── turbo.json                           # Cấu hình Turborepo: pipeline build, lint, test, cache,...
+├── .env.example                         # Mẫu biến môi trường cho toàn hệ thống
+├── .gitignore                           # Danh sách file/thư mục không commit lên git
+├── docker-compose.yml                   # Docker setup cho toàn bộ stack (web, api, db, redis, nginx)
 │
-├── apps/                           # Application Layer
-│   ├── web/                        # Next.js Frontend
-│   │   ├── package.json
-│   │   ├── next.config.js
-│   │   ├── tsconfig.json
-│   │   ├── tailwind.config.ts
-│   │   ├── .env.local
+├── apps/                                # Application Layer: chứa các ứng dụng chính (frontend & backend)
+│   ├── web/                             # 🖥️  Frontend - Next.js 14 (App Router)
+│   │   ├── package.json                 # Cấu hình dependencies riêng cho web app
+│   │   ├── next.config.js               # Cấu hình Next.js (images, env, experimental features)
+│   │   ├── tsconfig.json                # Cấu hình TypeScript cho frontend
+│   │   ├── tailwind.config.ts           # Cấu hình TailwindCSS theme, plugin, màu sắc
+│   │   ├── .env.local                   # Biến môi trường riêng cho frontend (API_URL, WS_URL,...)
 │   │   │
-│   │   ├── public/
-│   │   │   ├── images/
-│   │   │   ├── sounds/
-│   │   │   └── icons/
+│   │   ├── public/                      # Static assets (ảnh, âm thanh, icon)
+│   │   │   ├── images/                  # Hình ảnh sử dụng trong giao diện
+│   │   │   ├── sounds/                  # Âm thanh thông báo, hiệu ứng
+│   │   │   └── icons/                   # Bộ biểu tượng SVG / PNG
 │   │   │
-│   │   ├── src/
-│   │   │   ├── app/                # Next.js 14 App Router
-│   │   │   │   ├── layout.tsx
-│   │   │   │   ├── page.tsx
-│   │   │   │   ├── globals.css
+│   │   ├── src/                         # Source code chính của frontend
+│   │   │   ├── app/                     # App Router của Next.js 14
+│   │   │   │   ├── layout.tsx           # Layout tổng của ứng dụng
+│   │   │   │   ├── page.tsx             # Trang chính (home)
+│   │   │   │   ├── globals.css          # CSS toàn cục
 │   │   │   │   │
-│   │   │   │   ├── (dashboard)/   # Route groups
-│   │   │   │   │   ├── layout.tsx
-│   │   │   │   │   ├── page.tsx
-│   │   │   │   │   ├── sensors/
-│   │   │   │   │   │   └── page.tsx
-│   │   │   │   │   ├── camera/
-│   │   │   │   │   │   └── page.tsx
-│   │   │   │   │   ├── behaviors/
-│   │   │   │   │   │   └── page.tsx
-│   │   │   │   │   ├── logs/
-│   │   │   │   │   │   └── page.tsx
-│   │   │   │   │   └── settings/
-│   │   │   │   │       └── page.tsx
+│   │   │   │   ├── (dashboard)/         # Nhóm route của dashboard (sau khi đăng nhập)
+│   │   │   │   │   ├── layout.tsx       # Layout riêng của dashboard (Sidebar + Header)
+│   │   │   │   │   ├── page.tsx         # Trang tổng quan dashboard
+│   │   │   │   │   ├── sensors/         # Module quản lý cảm biến
+│   │   │   │   │   │   └── page.tsx     # Giao diện dữ liệu cảm biến realtime
+│   │   │   │   │   ├── camera/          # Module camera
+│   │   │   │   │   │   └── page.tsx     # Hiển thị video live, nhận diện khuôn mặt
+│   │   │   │   │   ├── behaviors/       # Module hành vi của robot
+│   │   │   │   │   │   └── page.tsx     # Theo dõi và điều chỉnh hành vi robot
+│   │   │   │   │   ├── logs/            # Nhật ký hoạt động
+│   │   │   │   │   │   └── page.tsx     # Hiển thị log cảm biến, camera, hành vi
+│   │   │   │   │   └── settings/        # Cấu hình hệ thống
+│   │   │   │   │       └── page.tsx     # Cài đặt người dùng, API key, theme,...
 │   │   │   │   │
-│   │   │   │   ├── api/            # API Routes
-│   │   │   │   │   ├── health/
-│   │   │   │   │   │   └── route.ts
-│   │   │   │   │   └── auth/
-│   │   │   │   │       └── [...nextauth]/
-│   │   │   │   │           └── route.ts
+│   │   │   │   ├── api/                 # API routes (Serverless API)
+│   │   │   │   │   ├── health/route.ts  # Endpoint kiểm tra sức khỏe hệ thống
+│   │   │   │   │   └── auth/[...nextauth]/route.ts # Cấu hình xác thực (NextAuth)
 │   │   │   │   │
-│   │   │   │   └── (auth)/
-│   │   │   │       ├── login/
-│   │   │   │       │   └── page.tsx
-│   │   │   │       └── register/
-│   │   │   │           └── page.tsx
+│   │   │   │   └── (auth)/              # Nhóm route xác thực
+│   │   │   │       ├── login/page.tsx   # Trang đăng nhập
+│   │   │   │       └── register/page.tsx# Trang đăng ký tài khoản
 │   │   │   │
-│   │   │   ├── components/         # React Components
-│   │   │   │   ├── ui/             # Shadcn/ui components
+│   │   │   ├── components/              # Các thành phần giao diện tái sử dụng
+│   │   │   │   ├── ui/                  # Shadcn/ui components: button, card, chart, ...
 │   │   │   │   │   ├── button.tsx
 │   │   │   │   │   ├── card.tsx
 │   │   │   │   │   ├── chart.tsx
 │   │   │   │   │   └── ...
 │   │   │   │   │
-│   │   │   │   ├── features/       # Feature components
-│   │   │   │   │   ├── sensors/
+│   │   │   │   ├── features/            # Component theo tính năng
+│   │   │   │   │   ├── sensors/         # Tính năng hiển thị cảm biến
 │   │   │   │   │   │   ├── SensorCard.tsx
 │   │   │   │   │   │   ├── SensorChart.tsx
 │   │   │   │   │   │   └── SensorGrid.tsx
-│   │   │   │   │   │
-│   │   │   │   │   ├── camera/
+│   │   │   │   │   ├── camera/          # Tính năng camera
 │   │   │   │   │   │   ├── LiveStream.tsx
 │   │   │   │   │   │   ├── FaceRecognition.tsx
 │   │   │   │   │   │   └── MotionDetection.tsx
-│   │   │   │   │   │
-│   │   │   │   │   ├── robot/
+│   │   │   │   │   ├── robot/           # Điều khiển robot
 │   │   │   │   │   │   ├── RobotControl.tsx
 │   │   │   │   │   │   ├── BehaviorDisplay.tsx
 │   │   │   │   │   │   └── EmotionDisplay.tsx
-│   │   │   │   │   │
-│   │   │   │   │   └── voice/
+│   │   │   │   │   └── voice/           # Nhận diện và điều khiển bằng giọng nói
 │   │   │   │   │       ├── VoiceCommands.tsx
 │   │   │   │   │       └── ConversationHistory.tsx
 │   │   │   │   │
-│   │   │   │   └── layout/         # Layout components
+│   │   │   │   └── layout/              # Layout UI components (Header, Sidebar,...)
 │   │   │   │       ├── Header.tsx
 │   │   │   │       ├── Sidebar.tsx
 │   │   │   │       ├── Footer.tsx
 │   │   │   │       └── DashboardLayout.tsx
 │   │   │   │
-│   │   │   ├── hooks/              # Custom React Hooks
-│   │   │   │   ├── useWebSocket.ts
-│   │   │   │   ├── useSensorData.ts
-│   │   │   │   ├── useCamera.ts
-│   │   │   │   └── useRobotControl.ts
+│   │   │   ├── hooks/                   # Custom React Hooks
+│   │   │   │   ├── useWebSocket.ts      # Hook quản lý kết nối realtime
+│   │   │   │   ├── useSensorData.ts     # Lấy và cập nhật dữ liệu cảm biến
+│   │   │   │   ├── useCamera.ts         # Quản lý camera livestream
+│   │   │   │   └── useRobotControl.ts   # Điều khiển robot từ giao diện
 │   │   │   │
-│   │   │   ├── lib/                # Utilities & Configs
-│   │   │   │   ├── websocket.ts
-│   │   │   │   ├── api-client.ts
-│   │   │   │   ├── utils.ts
-│   │   │   │   └── constants.ts
+│   │   │   ├── lib/                     # Thư viện & cấu hình
+│   │   │   │   ├── websocket.ts         # Cấu hình WebSocket client
+│   │   │   │   ├── api-client.ts        # Thiết lập Axios/fetch API
+│   │   │   │   ├── utils.ts             # Hàm tiện ích chung
+│   │   │   │   └── constants.ts         # Biến cố định (endpoint, key,...)
 │   │   │   │
-│   │   │   ├── stores/             # State Management (Zustand)
+│   │   │   ├── stores/                  # Zustand stores (state management)
 │   │   │   │   ├── useSensorStore.ts
 │   │   │   │   ├── useRobotStore.ts
 │   │   │   │   ├── useAuthStore.ts
 │   │   │   │   └── useUIStore.ts
 │   │   │   │
-│   │   │   └── types/              # TypeScript Types
+│   │   │   └── types/                   # TypeScript types cho frontend
 │   │   │       ├── sensor.ts
 │   │   │       ├── robot.ts
 │   │   │       ├── websocket.ts
 │   │   │       └── api.ts
 │   │   │
-│   │   └── .eslintrc.js
+│   │   └── .eslintrc.js                 # Cấu hình linting code cho frontend
 │   │
-│   └── api/                        # Backend WebSocket Server (Node.js/Bun)
+│   └── api/                             # ⚙️ Backend WebSocket + REST API
 │       ├── package.json
 │       ├── tsconfig.json
 │       ├── .env
 │       │
 │       ├── src/
-│       │   ├── index.ts            # Entry point
-│       │   ├── app.ts              # Express/Fastify app setup
+│       │   ├── index.ts                 # Entry point khởi động server
+│       │   ├── app.ts                   # Khởi tạo Express/Fastify app
 │       │   │
-│       │   ├── config/
-│       │   │   ├── database.ts
-│       │   │   ├── redis.ts
-│       │   │   └── websocket.ts
+│       │   ├── config/                  # Cấu hình hệ thống backend
+│       │   │   ├── database.ts          # Kết nối database (Prisma/TypeORM)
+│       │   │   ├── redis.ts             # Kết nối Redis cache/pubsub
+│       │   │   └── websocket.ts         # Thiết lập WebSocket server
 │       │   │
-│       │   ├── controllers/        # HTTP Controllers
-│       │   │   ├── auth.controller.ts
-│       │   │   ├── sensor.controller.ts
-│       │   │   ├── robot.controller.ts
-│       │   │   └── logs.controller.ts
+│       │   ├── controllers/             # Controller xử lý HTTP request
+│       │   │   ├── auth.controller.ts   # Xác thực người dùng
+│       │   │   ├── sensor.controller.ts # CRUD dữ liệu cảm biến
+│       │   │   ├── robot.controller.ts  # Điều khiển robot
+│       │   │   └── logs.controller.ts   # Quản lý log & lịch sử
 │       │   │
-│       │   ├── services/           # Business Logic
-│       │   │   ├── esp32.service.ts
-│       │   │   ├── ai-engine.service.ts        # 🔄 RENAMED from laptop-ai.service.ts
-│       │   │   ├── sensor.service.ts
-│       │   │   ├── camera.service.ts
-│       │   │   └── notification.service.ts
+│       │   ├── services/                # Xử lý nghiệp vụ (Business logic)
+│       │   │   ├── esp32.service.ts     # Giao tiếp với ESP32
+│       │   │   ├── ai-engine.service.ts # Tích hợp AI (nhận diện, phản hồi)
+│       │   │   ├── sensor.service.ts    # Xử lý dữ liệu cảm biến
+│       │   │   ├── camera.service.ts    # Streaming & nhận diện hình ảnh
+│       │   │   └── notification.service.ts # Gửi thông báo (push/email/webhook)
 │       │   │
-│       │   ├── websocket/          # WebSocket Handlers
+│       │   ├── websocket/               # Xử lý kết nối WebSocket
 │       │   │   ├── index.ts
-│       │   │   ├── esp32.handler.ts            # ESP32 connection
-│       │   │   ├── ai-engine.handler.ts        # 🔄 RENAMED from laptop.handler.ts
-│       │   │   ├── client.handler.ts           # Web client connection
-│       │   │   └── message-router.ts           # Route messages between connections
+│       │   │   ├── esp32.handler.ts     # Giao tiếp với thiết bị ESP32
+│       │   │   ├── ai-engine.handler.ts # Giao tiếp với AI Engine
+│       │   │   ├── client.handler.ts    # Kết nối client web
+│       │   │   └── message-router.ts    # Định tuyến tin nhắn giữa các kết nối
 │       │   │
-│       │   ├── models/             # Database Models (Prisma/TypeORM)
+│       │   ├── models/                  # Định nghĩa model database
 │       │   │   ├── User.ts
 │       │   │   ├── SensorData.ts
 │       │   │   ├── BehaviorLog.ts
 │       │   │   ├── VoiceLog.ts
 │       │   │   └── ActuatorCommand.ts
 │       │   │
-│       │   ├── routes/             # API Routes
+│       │   ├── routes/                  # Định tuyến API (Express/Fastify)
 │       │   │   ├── index.ts
 │       │   │   ├── auth.routes.ts
 │       │   │   ├── sensor.routes.ts
 │       │   │   ├── robot.routes.ts
 │       │   │   └── logs.routes.ts
 │       │   │
-│       │   ├── middleware/
+│       │   ├── middleware/              # Middleware xử lý giữa request
 │       │   │   ├── auth.middleware.ts
 │       │   │   ├── error.middleware.ts
 │       │   │   ├── rate-limit.middleware.ts
 │       │   │   └── validation.middleware.ts
 │       │   │
-│       │   ├── utils/
+│       │   ├── utils/                   # Hàm tiện ích backend
 │       │   │   ├── logger.ts
 │       │   │   ├── validation.ts
 │       │   │   └── helpers.ts
 │       │   │
-│       │   └── types/
+│       │   └── types/                   # TypeScript type definitions backend
 │       │       ├── index.ts
 │       │       ├── websocket.types.ts
 │       │       └── api.types.ts
 │       │
-│       ├── prisma/                 # Database Schema
+│       ├── prisma/                      # Prisma schema & migrations
 │       │   ├── schema.prisma
 │       │   └── migrations/
 │       │
-│       └── tests/
+│       └── tests/                       # Unit & integration tests
 │           ├── unit/
 │           └── integration/
 │
-├── packages/                       # Shared Packages
-│   ├── ui/                         # Shared UI Components
-│   │   ├── package.json
-│   │   ├── tsconfig.json
-│   │   ├── src/
-│   │   │   ├── index.ts
-│   │   │   ├── Button/
-│   │   │   ├── Card/
-│   │   │   └── Chart/
-│   │   └── README.md
-│   │
-│   ├── types/                      # Shared TypeScript Types
-│   │   ├── package.json
-│   │   ├── src/
-│   │   │   ├── index.ts
-│   │   │   ├── sensor.types.ts
-│   │   │   ├── robot.types.ts
-│   │   │   └── websocket.types.ts
-│   │   └── tsconfig.json
-│   │
-│   ├── utils/                      # Shared Utilities
-│   │   ├── package.json
-│   │   ├── src/
-│   │   │   ├── index.ts
-│   │   │   ├── validators.ts
-│   │   │   ├── formatters.ts
-│   │   │   └── constants.ts
-│   │   └── tsconfig.json
-│   │
-│   └── config/                     # Shared Configs
-│       ├── eslint-config/
-│       ├── typescript-config/
-│       └── tailwind-config/
+├── packages/                            # 📦 Shared packages (dùng chung cho web + api)
+│   ├── ui/                              # Thư viện UI components dùng chung
+│   ├── types/                           # Chia sẻ TypeScript types
+│   ├── utils/                           # Hàm tiện ích chung
+│   └── config/                          # Cấu hình lint, ts, tailwind dùng chung
 │
-├── services/                       # External Services Integration
-│   └── ai-engine-adapter/          # 🔄 RENAMED from laptop-ai-adapter/
-│       ├── package.json
-│       ├── src/
-│       │   ├── index.ts
-│       │   ├── websocket-client.ts
-│       │   └── message-parser.ts
-│       └── README.md
+├── services/                            # 🔌 External integrations
+│   └── ai-engine-adapter/               # Giao tiếp giữa backend và AI Engine cục bộ
 │
-├── database/                       # Database Setup
-│   ├── schema.sql
-│   ├── migrations/
-│   ├── seeds/
-│   │   ├── users.seed.sql
-│   │   └── settings.seed.sql
-│   └── README.md
+├── database/                            # Database scripts: schema, seeds, migration
 │
-├── docs/                           # Documentation
-│   ├── API.md
-│   ├── WEBSOCKET.md
-│   ├── DEPLOYMENT.md
-│   ├── ARCHITECTURE.md
-│   └── CONTRIBUTING.md
+├── docs/                                # 📚 Tài liệu kiến trúc, API, WebSocket, Deploy,...
 │
-├── scripts/                        # Build & Deploy Scripts
-│   ├── setup.sh
-│   ├── build.sh
-│   ├── deploy.sh
-│   └── seed-database.sh
+├── scripts/                             # Script build, deploy, setup môi trường
 │
-└── infrastructure/                 # Infrastructure as Code
-    ├── docker/
-    │   ├── Dockerfile.web
-    │   ├── Dockerfile.api
-    │   └── Dockerfile.nginx
-    │
-    ├── kubernetes/
-    │   ├── deployment.yaml
-    │   ├── service.yaml
-    │   └── ingress.yaml
-    │
-    └── nginx/
-        └── nginx.conf
+└── infrastructure/                      # ⚙️ IaC (Infrastructure as Code): Docker, K8s, Nginx
+
 
 Dự án này được thiết kế theo mô hình Monorepo + Turborepo + PNPM Workspaces, nghĩa là:
 

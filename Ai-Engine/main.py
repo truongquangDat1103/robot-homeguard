@@ -1,159 +1,290 @@
 """
-Điểm khởi động ứng dụng AI-Engine
-Quản lý vòng đời và điều phối chính của hệ thống
+AI-Engine Application Entry Point
+Main orchestration và lifecycle management
 """
-import asyncio                                                  # Thư viện chuẩn để làm việc với các tác vụ bất đồng bộ
-import signal                                                   # Thư viện chuẩn để xử lý tín hiệu hệ thống
-import sys                                                      # Thư viện chuẩn để tương tác với hệ thống                                                   
-from typing import Optional                                     # Thư viện chuẩn để hỗ trợ chú thích kiểu dữ liệu                  
+import asyncio
+import signal
+import sys
+from typing import Optional
 
-from loguru import logger                                       # Thư viện ghi log nâng cao                                           
+from loguru import logger
 
-from config.settings import settings                            # Cấu hình ứng dụng                                         
-from src.utils.logger import setup_logger                       # Hàm thiết lập cấu hình ghi log                                    
-from src.utils.constants import SystemStatus                    # Các hằng số và enum dùng trong hệ thống                               
+from config.settings import settings
+from src.utils.logger import setup_logger
+from src.utils.constants import SystemStatus, BehaviorState, Emotion
+
+# Import services
+from src.services.websocket import get_websocket_manager
+from src.core.vision import CameraManager
+from src.core.audio import AudioCapture, SpeechToText, TextToSpeech
+from src.core.nlp import LLMManager, ConversationEngine, IntentClassifier
+from src.core.behavior import BehaviorEngine, EmotionModel, DecisionMaker, Personality
+from src.core.analytics import SensorAnalyzer
 
 
 class AIEngine:
-    """Lớp chính của ứng dụng AI Engine."""
+    """Main AI Engine application."""
     
     def __init__(self):
         """Khởi tạo AI Engine."""
         self.status = SystemStatus.OFFLINE
         self.running = False
         
-        # Các dịch vụ (sẽ được khởi tạo sau)
-        self.websocket_client = None
-        self.camera_service = None
-        self.voice_service = None
-        self.llm_service = None
+        # Core services
+        self.websocket_manager = None
+        self.camera_manager = None
+        self.audio_capture = None
+        self.stt = None
+        self.tts = None
+        self.llm_manager = None
+        self.conversation_engine = None
+        self.intent_classifier = None
+        self.behavior_engine = None
+        self.emotion_model = None
+        self.decision_maker = None
+        self.personality = None
+        self.sensor_analyzer = None
         
-        logger.info("AI-Engine đã được khởi tạo")
-        logger.info(f"Môi trường: {settings.env}")
-        logger.info(f"Chế độ gỡ lỗi: {settings.debug}")
+        logger.info("AI-Engine đã khởi tạo")
+        logger.info(f"Environment: {settings.env}")
+        logger.info(f"Debug mode: {settings.debug}")
     
     async def initialize(self) -> None:
-        """Khởi tạo tất cả các dịch vụ và module."""
+        """Khởi tạo tất cả services và modules."""
         try:
-            logger.info("🚀 Bắt đầu khởi tạo AI-Engine...")
+            logger.info("🚀 Đang khởi tạo AI-Engine...")
             
-            # TODO: Khởi tạo các dịch vụ tại đây
-            # self.websocket_client = WebSocketClient(settings.websocket)
-            # self.camera_service = CameraService(settings.camera)
-            # self.voice_service = VoiceService(settings.audio)
-            # self.llm_service = LLMService(settings.llm)
+            # 1. WebSocket
+            if settings.features.enable_conversation:
+                logger.info("Khởi tạo WebSocket Manager...")
+                self.websocket_manager = get_websocket_manager()
+                await self.websocket_manager.start()
             
-            logger.info("✅ Tất cả dịch vụ đã khởi tạo thành công")
+            # 2. Vision
+            if settings.features.enable_face_recognition:
+                logger.info("Khởi tạo Camera Manager...")
+                self.camera_manager = CameraManager(settings.camera)
+                # Camera sẽ start khi cần
+            
+            # 3. Audio
+            if settings.features.enable_voice_recognition:
+                logger.info("Khởi tạo Audio Services...")
+                self.audio_capture = AudioCapture(settings.audio)
+                self.stt = SpeechToText(
+                    model_size=settings.audio.stt_model,
+                    language=settings.audio.stt_language
+                )
+                self.tts = TextToSpeech(
+                    language=settings.audio.tts_language
+                )
+            
+            # 4. NLP
+            if settings.features.enable_conversation:
+                logger.info("Khởi tạo NLP Services...")
+                self.llm_manager = LLMManager(settings.llm)
+                self.conversation_engine = ConversationEngine(self.llm_manager)
+                self.intent_classifier = IntentClassifier()
+            
+            # 5. Behavior
+            if settings.features.enable_behavior_engine:
+                logger.info("Khởi tạo Behavior Engine...")
+                self.behavior_engine = BehaviorEngine(
+                    initial_state=BehaviorState.IDLE,
+                    initial_emotion=Emotion.NEUTRAL
+                )
+                self.emotion_model = EmotionModel()
+                self.decision_maker = DecisionMaker()
+                self.personality = Personality(preset=settings.behavior.personality)
+            
+            # 6. Analytics
+            if settings.features.enable_analytics:
+                logger.info("Khởi tạo Analytics...")
+                self.sensor_analyzer = SensorAnalyzer()
+            
+            logger.info("✅ Tất cả services đã khởi tạo thành công")
             self.status = SystemStatus.HEALTHY
             
         except Exception as e:
-            logger.error(f"❌ Khởi tạo thất bại: {e}")
+            logger.error(f"❌ Lỗi khởi tạo: {e}")
             self.status = SystemStatus.UNHEALTHY
             raise
     
     async def start(self) -> None:
-        """Bắt đầu chạy AI Engine."""
+        """Khởi động AI Engine."""
         try:
             await self.initialize()
             self.running = True
             
             logger.info("🤖 AI-Engine đang chạy...")
-            logger.info(f"Tên robot: {settings.behavior.robot_name}")
-            logger.info(f"Tính cách: {settings.behavior.personality}")
+            logger.info(f"Robot Name: {settings.behavior.robot_name}")
+            logger.info(f"Personality: {settings.behavior.personality}")
             
-            # TODO: Khởi chạy các dịch vụ
-            # await asyncio.gather(
-            #     self.websocket_client.connect(),
-            #     self.camera_service.start(),
-            #     self.voice_service.start(),
-            #     self.llm_service.start()
-            # )
+            # Setup signal handlers
+            self._setup_signal_handlers()
             
-            # Tiếp tục chạy cho đến khi dừng lại
+            # Start main loop
             await self.run()
             
         except KeyboardInterrupt:
-            logger.info("Nhận tín hiệu dừng hệ thống")
+            logger.info("Nhận tín hiệu dừng")
         except Exception as e:
-            logger.error(f"Lỗi trong quá trình khởi động: {e}")
+            logger.error(f"Lỗi khi khởi động: {e}")
             self.status = SystemStatus.UNHEALTHY
         finally:
             await self.shutdown()
     
     async def run(self) -> None:
-        """Vòng lặp sự kiện chính."""
+        """Main event loop."""
         try:
             while self.running:
-                # Vòng lặp xử lý chính
+                # Main processing loop
                 await asyncio.sleep(0.1)
                 
-                # TODO: Thêm logic xử lý chính
-                # - Xử lý tin nhắn WebSocket đến
-                # - Xử lý khung hình từ camera
-                # - Xử lý âm thanh ghi lại
-                # - Cập nhật trạng thái hành vi của robot
+                # Update emotion model
+                if self.emotion_model:
+                    self.emotion_model.update()
+                
+                # Process events
+                if self.behavior_engine:
+                    self.behavior_engine.process_events()
+                
+                # Process decision queue
+                if self.decision_maker and self.decision_maker.has_pending_actions():
+                    action = self.decision_maker.get_next_action()
+                    if action:
+                        await self._execute_action(action)
+                
+                # Send status update (every 10s)
+                if self.websocket_manager and hasattr(self, '_last_status_time'):
+                    import time
+                    if time.time() - self._last_status_time > 10:
+                        await self._send_status_update()
+                        self._last_status_time = time.time()
+                else:
+                    import time
+                    self._last_status_time = time.time()
                 
         except asyncio.CancelledError:
-            logger.info("Vòng lặp chính đã bị hủy")
+            logger.info("Main loop đã bị hủy")
+    
+    async def _execute_action(self, action) -> None:
+        """
+        Thực thi action.
+        
+        Args:
+            action: Action object từ DecisionMaker
+        """
+        from src.core.behavior.decision_maker import ActionType
+        
+        logger.info(f"Executing action: {action.action_type.value}")
+        
+        try:
+            if action.action_type == ActionType.SPEAK:
+                # Text-to-speech
+                if self.tts:
+                    text = action.parameters.get('text', '')
+                    await self.tts.speak_async(text)
+            
+            elif action.action_type == ActionType.CONTROL_DEVICE:
+                # Send command qua WebSocket
+                if self.websocket_manager:
+                    device = action.parameters.get('device')
+                    device_action = action.parameters.get('action')
+                    logger.info(f"Controlling device: {device} - {device_action}")
+                    # TODO: Send actual command
+            
+            # Mark as completed
+            self.decision_maker.complete_current_action()
+            
+        except Exception as e:
+            logger.error(f"Lỗi thực thi action: {e}")
+    
+    async def _send_status_update(self) -> None:
+        """Gửi status update qua WebSocket."""
+        if not self.websocket_manager:
+            return
+        
+        import psutil
+        
+        await self.websocket_manager.send_status(
+            cpu_usage=psutil.cpu_percent(interval=0.1),
+            memory_usage=psutil.virtual_memory().percent,
+            active_services=self._get_active_services()
+        )
+    
+    def _get_active_services(self) -> list:
+        """Lấy danh sách active services."""
+        services = []
+        if self.websocket_manager and self.websocket_manager.is_connected():
+            services.append("websocket")
+        if self.camera_manager:
+            services.append("camera")
+        if self.audio_capture:
+            services.append("audio")
+        if self.llm_manager:
+            services.append("nlp")
+        if self.behavior_engine:
+            services.append("behavior")
+        return services
     
     async def shutdown(self) -> None:
-        """Tắt hệ thống và dừng toàn bộ dịch vụ một cách an toàn."""
-        logger.info("🛑 Đang tắt AI-Engine...")
+        """Gracefully shutdown tất cả services."""
+        logger.info("🛑 Đang shutdown AI-Engine...")
         self.running = False
         self.status = SystemStatus.OFFLINE
         
         try:
-            # TODO: Dừng toàn bộ dịch vụ
-            # if self.camera_service:
-            #     await self.camera_service.stop()
-            # if self.voice_service:
-            #     await self.voice_service.stop()
-            # if self.websocket_client:
-            #     await self.websocket_client.disconnect()
+            # Stop camera
+            if self.camera_manager and self.camera_manager.is_running():
+                await self.camera_manager.stop()
+                self.camera_manager.release()
             
-            logger.info("✅ AI-Engine đã tắt hoàn toàn")
+            # Stop audio
+            if self.audio_capture and self.audio_capture.is_recording():
+                self.audio_capture.stop_recording()
+                self.audio_capture.release()
+            
+            # Stop WebSocket
+            if self.websocket_manager:
+                await self.websocket_manager.stop()
+            
+            logger.info("✅ AI-Engine đã shutdown hoàn tất")
             
         except Exception as e:
-            logger.error(f"Lỗi trong quá trình tắt hệ thống: {e}")
+            logger.error(f"Lỗi khi shutdown: {e}")
+    
+    def _setup_signal_handlers(self) -> None:
+        """Setup signal handlers cho graceful shutdown."""
+        def signal_handler(sig, frame):
+            logger.info(f"Nhận signal {sig}")
+            self.running = False
+        
+        signal.signal(signal.SIGINT, signal_handler)
+        signal.signal(signal.SIGTERM, signal_handler)
     
     def handle_signal(self, sig: int) -> None:
-        """Xử lý tín hiệu hệ thống (ví dụ: Ctrl+C, SIGTERM)."""
-        logger.info(f"Nhận tín hiệu hệ thống: {sig}")
+        """Handle system signals."""
+        logger.info(f"Nhận signal {sig}")
         self.running = False
 
 
-def setup_signal_handlers(engine: AIEngine) -> None:
-    """Thiết lập trình xử lý tín hiệu để dừng hệ thống an toàn."""
-    loop = asyncio.get_event_loop()
-    
-    for sig in (signal.SIGTERM, signal.SIGINT):
-        loop.add_signal_handler(
-            sig,
-            lambda s=sig: engine.handle_signal(s)
-        )
-
-
 async def main() -> None:
-    """Điểm khởi đầu chính của ứng dụng."""
-    # Thiết lập cấu hình ghi log
+    """Main entry point."""
+    # Setup logging
     setup_logger(level=settings.log_level)
     
-    # Hiển thị banner
+    # Print banner
     print_banner()
     
-    # Tạo và khởi chạy engine
+    # Create và start engine
     engine = AIEngine()
     
-    # Thiết lập xử lý tín hiệu (chỉ áp dụng cho hệ thống Unix)
-    if sys.platform != "win32":
-        setup_signal_handlers(engine)
-    
-    # Khởi động engine
+    # Start the engine
     await engine.start()
 
 
 def print_banner() -> None:
-    """Hiển thị banner thông tin ứng dụng."""
+    """In banner khi khởi động."""
     banner = """
     ╔═══════════════════════════════════════════════════════════╗
     ║                                                           ║
@@ -164,17 +295,43 @@ def print_banner() -> None:
     ╚═══════════════════════════════════════════════════════════╝
     """
     print(banner)
-    print(f"    Phiên bản: 0.1.0")
-    print(f"    Môi trường: {settings.env}")
+    print(f"    Version: 0.1.0")
+    print(f"    Environment: {settings.env}")
     print(f"    Python: {sys.version.split()[0]}")
+    print(f"    Robot: {settings.behavior.robot_name}")
     print()
+
+
+def run_api_server() -> None:
+    """Chạy API server (FastAPI)."""
+    if not settings.api.enabled:
+        logger.warning("API server bị disabled trong config")
+        return
+    
+    import uvicorn
+    from src.api.routes import app
+    
+    logger.info(f"🌐 Starting API server on {settings.api.host}:{settings.api.port}")
+    
+    uvicorn.run(
+        app,
+        host=settings.api.host,
+        port=settings.api.port,
+        workers=settings.api.workers,
+        log_level=settings.log_level.lower()
+    )
 
 
 if __name__ == "__main__":
     try:
-        asyncio.run(main())
+        # Kiểm tra nếu cần chạy API server
+        if len(sys.argv) > 1 and sys.argv[1] == "--api":
+            run_api_server()
+        else:
+            # Chạy main engine
+            asyncio.run(main())
     except KeyboardInterrupt:
-        logger.info("Ứng dụng đã được dừng bởi người dùng")
+        logger.info("Application stopped by user")
     except Exception as e:
-        logger.error(f"Lỗi ứng dụng: {e}")
+        logger.error(f"Application error: {e}")
         sys.exit(1)

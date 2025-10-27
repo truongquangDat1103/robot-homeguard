@@ -1,0 +1,5 @@
+#khai báo các thư mục con mà PNPM sẽ coi là workspace packages.
+packages:
+  - 'apps/*'
+  - 'packages/*'
+  - 'services/*' 

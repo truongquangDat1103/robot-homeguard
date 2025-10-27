@@ -1,0 +1,54 @@
+FROM node:20-alpine AS base
+
+RUN corepack enable && corepack prepare pnpm@8.12.0 --activate
+
+WORKDIR /app
+
+# Copy root files
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml turbo.json ./
+
+# Copy package sources
+COPY packages ./packages
+COPY apps/web ./apps/web
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile
+
+# Build packages
+RUN pnpm build --filter "@homeguard/types"
+RUN pnpm build --filter "@homeguard/utils"
+
+# Development stage
+FROM base AS development
+WORKDIR /app
+CMD ["pnpm", "--filter", "@homeguard/web", "dev"]
+
+# Build stage
+FROM base AS builder
+WORKDIR /app
+
+# Build web app
+RUN pnpm --filter "@homeguard/web" build
+
+# Production stage
+FROM node:20-alpine AS production
+
+RUN corepack enable && corepack prepare pnpm@8.12.0 --activate
+
+WORKDIR /app
+
+# Copy necessary files
+COPY --from=builder /app/apps/web/.next ./apps/web/.next
+COPY --from=builder /app/apps/web/public ./apps/web/public
+COPY --from=builder /app/apps/web/package.json ./apps/web/
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/packages ./packages
+
+WORKDIR /app/apps/web
+
+EXPOSE 3000
+
+ENV NODE_ENV=production
+ENV HOSTNAME="0.0.0.0"
+
+CMD ["pnpm", "start"]

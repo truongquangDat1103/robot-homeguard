@@ -1,0 +1,74 @@
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info
+dist/
+build/
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Tests
+tests/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs
+logs/
+*.log
+
+# Models (tải khi runtime)
+src/models/**/*.pkl
+src/models/**/*.h5
+src/models/**/*.pt
+src/models/**/*.pth
+
+# Database
+*.db
+*.sqlite
+
+# Docker
+docker/
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+
+# Notebooks
+notebooks/
+*.ipynb
+
+# Temporary
+tmp/
+temp/
+*.tmp
+
+# Environment
+.env.example

@@ -1,0 +1,12 @@
+{
+    "name": "runtest",
+    "version": "1.0.0",
+    "private": true,
+    "type": "commonjs",
+    "scripts": {
+        "start": "node test-esp32.js"
+    },
+    "dependencies": {
+        "socket.io-client": "^4.6.1"
+    }
+}

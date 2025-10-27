@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test WebSocket</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        #messages { border: 1px solid #ccc; padding: 10px; height: 300px; overflow-y: scroll; }
+        input { width: 300px; padding: 5px; }
+        button { padding: 5px 15px; }
+    </style>
+</head>
+<body>
+    <h1>🔌 WebSocket Test</h1>
+    
+    <div>
+        <input type="text" id="message" placeholder="Nhập tin nhắn...">
+        <button onclick="sendMessage()">Gửi</button>
+        <button onclick="connect()">Kết nối</button>
+        <button onclick="disconnect()">Ngắt</button>
+    </div>
+    
+    <h3>Messages:</h3>
+    <div id="messages"></div>
+
+    <script>
+        let ws = null;
+
+        function connect() {
+            ws = new WebSocket('ws://localhost:8000/ws');
+            
+            ws.onopen = () => {
+                addMessage('✅ Đã kết nối!', 'green');
+            };
+            
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                addMessage('📨 Nhận: ' + JSON.stringify(data, null, 2), 'blue');
+            };
+            
+            ws.onclose = () => {
+                addMessage('❌ Đã ngắt kết nối', 'red');
+            };
+            
+            ws.onerror = (error) => {
+                addMessage('❌ Lỗi: ' + error, 'red');
+            };
+        }
+
+        function disconnect() {
+            if (ws) {
+                ws.close();
+                ws = null;
+            }
+        }
+
+        function sendMessage() {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                alert('Chưa kết nối!');
+                return;
+            }
+            
+            const msg = document.getElementById('message').value;
+            const data = {
+                type: 'text_input',
+                data: { text: msg }
+            };
+            
+            ws.send(JSON.stringify(data));
+            addMessage('📤 Gửi: ' + msg, 'green');
+            document.getElementById('message').value = '';
+        }
+
+        function addMessage(msg, color) {
+            const div = document.getElementById('messages');
+            const p = document.createElement('p');
+            p.style.color = color;
+            p.textContent = new Date().toLocaleTimeString() + ' - ' + msg;
+            div.appendChild(p);
+            div.scrollTop = div.scrollHeight;
+        }
+
+        // Auto connect on load
+        window.onload = connect;
+    </script>
+</body>
+</html>

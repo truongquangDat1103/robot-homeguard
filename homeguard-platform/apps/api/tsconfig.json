@@ -1,0 +1,20 @@
+{
+  "extends": "../../packages/config/typescript-config/base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "baseUrl": "./src",
+    "paths": {
+      "@/*": ["./*"],
+      "@config/*": ["./config/*"],
+      "@controllers/*": ["./controllers/*"],
+      "@services/*": ["./services/*"],
+      "@models/*": ["./models/*"],
+      "@middleware/*": ["./middleware/*"],
+      "@utils/*": ["./utils/*"],
+      "@websocket/*": ["./websocket/*"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "tests"]
+}

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>HomeGuard Test Client</title>
+    <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+</head>
+
+<body>
+    <h1>HomeGuard WebSocket Test</h1>
+    <div id="status">Disconnected</div>
+    <div id="data"></div>
+
+    <button onclick="sendCommand()">Send Robot Command</button>
+
+    <script>
+        const socket = io('http://localhost:4000', {
+            query: { type: 'web-client', userId: 'test-user' }
+        });
+
+        socket.on('connect', () => {
+            document.getElementById('status').innerHTML = 'Connected: ' + socket.id;
+            console.log('Connected');
+        });
+
+        socket.on('sensor:data', (data) => {
+            console.log('Sensor data:', data);
+            document.getElementById('data').innerHTML +=
+                `<p>Sensor: ${JSON.stringify(data)}</p>`;
+        });
+
+        socket.on('face:detected', (data) => {
+            console.log('Face detected:', data);
+            document.getElementById('data').innerHTML +=
+                `<p>Face: ${JSON.stringify(data)}</p>`;
+        });
+
+        socket.on('motion:detected', (data) => {
+            console.log('Motion detected:', data);
+            document.getElementById('data').innerHTML +=
+                `<p>Motion: ${JSON.stringify(data)}</p>`;
+        });
+
+        function sendCommand() {
+            socket.emit('robot:command', {
+                deviceId: 'esp32-test-1',
+                type: 'movement',
+                command: 'forward',
+                parameters: { speed: 50 }
+            });
+            console.log('Command sent');
+        }
+    </script>
+</body>
+
+</html>
