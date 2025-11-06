@@ -18,18 +18,33 @@ const registerSchema = z.object({
 });
 
 const generateTokens = (userId: string, email: string, role: string): AuthTokens => {
-  const secret = process.env.JWT_SECRET!;
+  const secret = process.env.JWT_SECRET;
+
+  if (!secret) {
+    throw new Error('JWT_SECRET is not defined');
+  }
+
   const expiresIn = process.env.JWT_EXPIRES_IN || '7d';
 
-  const accessToken = jwt.sign({ userId, email, role }, secret, { expiresIn });
-  const refreshToken = jwt.sign({ userId, type: 'refresh' }, secret, {
-    expiresIn: '30d',
-  });
+  // Calculate expiresIn in seconds for the response
+  const expiresInSeconds = expiresIn === '7d' ? 7 * 24 * 60 * 60 : 7 * 24 * 60 * 60;
+
+  const accessToken = jwt.sign(
+    { userId, email, role },
+    secret,
+    { expiresIn }
+  );
+
+  const refreshToken = jwt.sign(
+    { userId, type: 'refresh' },
+    secret,
+    { expiresIn: '30d' }
+  );
 
   return {
     accessToken,
     refreshToken,
-    expiresIn: 7 * 24 * 60 * 60, // 7 days in seconds
+    expiresIn: expiresInSeconds,
   };
 };
 
@@ -138,9 +153,17 @@ export const refreshToken = asyncHandler(async (req: Request, res: Response) => 
     throw new AppError(400, 'MISSING_TOKEN', 'Refresh token required');
   }
 
+  const secret = process.env.JWT_SECRET;
+
+  if (!secret) {
+    throw new AppError(500, 'SERVER_ERROR', 'JWT secret not configured');
+  }
+
   try {
-    const secret = process.env.JWT_SECRET!;
-    const decoded = jwt.verify(refreshToken, secret) as any;
+    const decoded = jwt.verify(refreshToken, secret) as jwt.JwtPayload & {
+      userId: string;
+      type?: string;
+    };
 
     if (decoded.type !== 'refresh') {
       throw new AppError(400, 'INVALID_TOKEN', 'Invalid token type');
@@ -164,6 +187,9 @@ export const refreshToken = asyncHandler(async (req: Request, res: Response) => 
 
     res.json(response);
   } catch (error) {
-    throw new AppError(401, 'INVALID_TOKEN', 'Invalid or expired refresh token');
+    if (error instanceof jwt.JsonWebTokenError) {
+      throw new AppError(401, 'INVALID_TOKEN', 'Invalid or expired refresh token');
+    }
+    throw error;
   }
 });

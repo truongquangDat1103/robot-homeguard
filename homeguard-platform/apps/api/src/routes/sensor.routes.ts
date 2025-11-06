@@ -6,7 +6,7 @@ import {
 } from '@/controllers/sensor.controller';
 import { authMiddleware } from '@/middleware/auth.middleware';
 
-const router = Router();
+const router: Router = Router();
 
 // All sensor routes require authentication
 router.use(authMiddleware);

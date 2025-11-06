@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { login, register, me, refreshToken } from '@/controllers/auth.controller';
 import { authMiddleware } from '@/middleware/auth.middleware';
 
-const router = Router();
+const router: Router = Router();
 
 router.post('/login', login);
 router.post('/register', register);
